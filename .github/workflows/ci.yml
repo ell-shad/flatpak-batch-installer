@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Tk and virtual display
+        run: sudo apt-get update && sudo apt-get install -y python3-tk xvfb
+      - name: Byte-compile
+        run: python -m compileall -q flathub_gui flathub-gui.py flatpak-gui.py tests
+      - name: Run tests (under xvfb so GUI smoke tests execute)
+        run: xvfb-run -a python -m unittest discover -s tests -v

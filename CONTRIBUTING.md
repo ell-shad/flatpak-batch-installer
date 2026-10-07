@@ -1,0 +1,45 @@
+# Contributing to Flathub Catalog Installer
+
+Thanks for helping out. The project is intentionally small and dependency-free;
+please keep it that way.
+
+## Setup
+
+No third-party Python packages are required — stdlib only.
+
+- Python 3.10+
+- Tkinter (`sudo apt install python3-tk` on Debian/Ubuntu)
+- Flatpak with the Flathub remote (for live testing)
+
+```bash
+python3 flathub-gui.py          # run the GUI
+make test                       # run the test suite
+make lint                       # byte-compile everything
+```
+
+## Conventions
+
+1. **Stdlib only.** Do not add heavy dependencies (no GTK/Qt bindings, no web
+   frameworks). New stdlib modules are fine.
+2. **Never block the UI thread.** Flatpak calls go in background threads and
+   stream output to the log area (see `flathub_gui/installer.py`).
+3. **Prefer official Flatpak commands** over scraping flathub.org.
+4. **No destructive surprises.** Never uninstall anything unless the user
+   explicitly requested it; install only after the confirmation dialog.
+5. **Test the helpers.** Pure logic in `catalog.py` / `flatpak.py` gets unit
+   tests under `tests/`. GUI tests live in `tests/test_ui.py` and must skip
+   cleanly when no display is available.
+6. **Update docs.** User-facing changes need a README note and a CHANGELOG
+   entry under `Unreleased`.
+
+## Pull requests
+
+- Small, focused PRs. One feature/fix per PR.
+- `make test` must pass (CI runs it under `xvfb` on Python 3.10–3.13).
+- Use the PR template; link any related issue.
+
+## Reporting bugs
+
+Use the bug-report issue template and include: distro, Python/Tk versions
+(`python3 --version`, `apt list --installed | grep python3-tk`), scope
+(user/system), and the relevant log output from the app.
