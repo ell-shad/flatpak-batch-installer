@@ -125,6 +125,11 @@ def dark_theme_settings() -> dict:
     }
 
 
+def stripe_colors(dark: bool):
+    """Alternating table-row backgrounds for the mode."""
+    return DARK_STRIPES if dark else LIGHT_STRIPES
+
+
 def polish_active_theme(style, dark: bool, heading_font=None):
     """Refine the *currently active* ttk theme (call after every switch).
 
@@ -162,5 +167,6 @@ __all__ = [
     "dark_theme_settings",
     "is_bootstrap",
     "polish_active_theme",
+    "stripe_colors",
     "system_prefers_dark",
 ]

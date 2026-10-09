@@ -36,7 +36,7 @@ WHAT IS WHAT
                     Update metadata (refresh AppStream data when names
                     show up empty); Save/Load selection files;
                     Dark mode switch.
-  Help ............ This guide (How to use / About) — or press F1.
+  Help ............ How to use (F1), Keyboard shortcuts (Ctrl+K), About.
   Filter .......... Live search across app name, app ID and summary.
   Select page ..... Tick every app on the current page.
   Clear ........... Untick everything.
@@ -52,16 +52,6 @@ WHAT IS WHAT
                     The spinner + "Working…" (top right) only means a
                     background job is running — it is not a progress %.
 
-KEYBOARD SHORTCUTS
-  F1 ............ Open this guide.
-  F5 ............ Reload the catalog.
-  Ctrl+F ........ Jump to the Filter box.
-  Ctrl+S / Ctrl+O  Save / load the selection file.
-  Ctrl+Enter .... Install selected (asks first, as always).
-  Ctrl+A ........ Tick the whole current page (in the table).
-  Space ......... Tick/untick the focused rows (in the table).
-  Esc ........... Clear the filter (in the Filter box).
-
 TYPICAL FIXES
   Names/summaries empty ... Click Update (fetches AppStream metadata).
   "Remote not found" ...... Add Flathub, then Update:
@@ -71,6 +61,27 @@ TYPICAL FIXES
   Already installed? ...... The Status column says "Installed"; filter
                             Status to "not-installed" to hide those.
 """
+
+SHORTCUTS = [
+    ("F1", "Open the usage guide"),
+    ("F5", "Reload the catalog"),
+    ("Ctrl+F", "Jump to the Filter box"),
+    ("Ctrl+S / Ctrl+O", "Save / load the selection file"),
+    ("Ctrl+K", "Open this cheat sheet"),
+    ("Ctrl+Enter", "Install selected (asks first, as always)"),
+    ("Ctrl+A", "Tick the whole current page (in the table)"),
+    ("Space", "Tick / untick the focused rows (in the table)"),
+    ("Esc", "Clear the filter (in the Filter box)"),
+]
+
+
+def shortcuts_text() -> str:
+    """Cheat-sheet text for the dialog and the CLI."""
+    width = max(len(keys) for keys, _ in SHORTCUTS)
+    lines = ["KEYBOARD SHORTCUTS"]
+    lines += [f"  {keys.ljust(width)}  {action}" for keys, action in SHORTCUTS]
+    return "\n".join(lines) + "\n"
+
 
 HOMEPAGE = "https://github.com/example/flatpak-batch-installer"
 ISSUES = "https://github.com/example/flatpak-batch-installer/issues"
@@ -93,4 +104,5 @@ def about_text(version: str) -> str:
     )
 
 
-__all__ = ["HOMEPAGE", "ISSUES", "USAGE_GUIDE", "about_text"]
+__all__ = ["HOMEPAGE", "ISSUES", "SHORTCUTS", "USAGE_GUIDE",
+           "about_text", "shortcuts_text"]

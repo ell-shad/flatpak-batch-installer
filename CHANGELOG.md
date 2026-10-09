@@ -7,6 +7,15 @@ All notable changes to this project are documented here. Format follows
 
 ### Changed
 
+- Single-row toolbar: Filter, Select page and Clear moved up; Save/Load
+  buttons removed (they live in Options); selection counter moved to the
+  statusbar.
+- Help refreshed: modern proportional body with highlighted section
+  headers and commands, header blocks, and a separate Keyboard
+  shortcuts window (Help menu, Ctrl+K) backed by one data list.
+
+### Changed
+
 - Toolbar decluttered: Scope, Update metadata, Save/Load selection and
   Dark mode moved into an `Options` dropdown (Help menu stays help-only).
   Top row now holds Load catalog, Status filter, Install and the two

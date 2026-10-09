@@ -39,8 +39,9 @@ def run_cli(argv=None) -> int:
     args = parser.parse_args(argv)
 
     if args.help_guide:
-        from .helptext import USAGE_GUIDE
+        from .helptext import USAGE_GUIDE, shortcuts_text
         print(USAGE_GUIDE)
+        print(shortcuts_text())
         return 0
 
     if args.installed:

@@ -117,7 +117,10 @@ class BrowserTest(unittest.TestCase):
         self.assertEqual(
             self.app._help_menu.entrycget(0, "label"), "How to use…")
         self.assertEqual(
-            self.app._help_menu.entrycget(1, "label"), "About…")
+            self.app._help_menu.entrycget(1, "label"), "Keyboard shortcuts…")
+        self.assertEqual(self.app._help_menu.type(2), "separator")
+        self.assertEqual(
+            self.app._help_menu.entrycget(3, "label"), "About…")
 
     def test_options_menu(self):
         menu = self.app._options_menu
@@ -174,7 +177,7 @@ class BrowserTest(unittest.TestCase):
 
     def test_shortcuts_registered(self):
         for seq in ("<F1>", "<F5>", "<Control-f>", "<Control-s>",
-                    "<Control-o>", "<Control-Return>"):
+                    "<Control-o>", "<Control-k>", "<Control-Return>"):
             self.assertTrue(self.app.bind(seq), seq)
         self.assertTrue(self.app.tree.bind("<Control-a>"))
         self.assertTrue(self.app.filter_entry.bind("<Escape>"))
@@ -191,6 +194,27 @@ class BrowserTest(unittest.TestCase):
         self.app.apply_filter()
         self.assertEqual(self.app.on_select_all_key(None), "break")
         self.assertEqual(len(self.app.selected_ids), 10)
+
+    def test_shortcuts_dialog(self):
+        from flatpak_batch_installer.helptext import SHORTCUTS
+        self.app.show_shortcuts()
+        dlg = self.app._dialogs.get("shortcuts")
+        self.assertIsNotNone(dlg)
+        self.assertTrue(dlg.winfo_exists())
+        self.assertEqual(dlg.title(), "Keyboard shortcuts")
+        tree = self.app._shortcut_tree
+        self.assertIsNotNone(tree)
+        self.assertEqual(len(tree.get_children()), len(SHORTCUTS))
+        dlg.destroy()
+
+    def test_help_body_styled(self):
+        self.app.show_help()
+        text = self.app._dialog_texts.get("help")
+        self.assertIsNotNone(text)
+        self.assertIn("h2", text.tag_names())
+        self.assertTrue(text.tag_ranges("h2"))
+        self.assertTrue(text.tag_ranges("code"))
+        text.winfo_toplevel().destroy()
 
     def test_help_and_about_dialogs(self):
         self.app.show_help()

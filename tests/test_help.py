@@ -1,9 +1,16 @@
 """Unit tests for flatpak_batch_installer.helptext and flatpak_batch_installer.resources."""
 
+import io
 import unittest
+from contextlib import redirect_stdout
 
 from flatpak_batch_installer import __version__
-from flatpak_batch_installer.helptext import USAGE_GUIDE, about_text
+from flatpak_batch_installer.helptext import (
+    SHORTCUTS,
+    USAGE_GUIDE,
+    about_text,
+    shortcuts_text,
+)
 from flatpak_batch_installer.resources import icon_path
 
 
@@ -21,7 +28,22 @@ class GuideTest(unittest.TestCase):
         self.assertIn("TYPICAL FIXES", USAGE_GUIDE)
 
 
-class AboutTest(unittest.TestCase):
+class ShortcutsTest(unittest.TestCase):
+    def test_shortcuts_live_apart_from_guide(self):
+        self.assertGreaterEqual(len(SHORTCUTS), 9)
+        self.assertIn("KEYBOARD SHORTCUTS", shortcuts_text())
+        self.assertIn("Ctrl+K", shortcuts_text())
+        self.assertNotIn("KEYBOARD SHORTCUTS", USAGE_GUIDE)
+
+    def test_cli_help_guide_prints_both(self):
+        from flatpak_batch_installer.app import run_cli
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = run_cli(["--help-guide"])
+        out = buf.getvalue()
+        self.assertEqual(code, 0)
+        self.assertIn("WHAT THIS APP DOES", out)
+        self.assertIn("KEYBOARD SHORTCUTS", out)
     def test_about(self):
         text = about_text(__version__)
         self.assertIn(__version__, text)

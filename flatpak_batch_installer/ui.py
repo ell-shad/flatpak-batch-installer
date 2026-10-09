@@ -12,6 +12,7 @@ from .config import (
     DARK_COLORS,
     DARK_THEME_NAME,
     DEFAULT_SCOPE,
+    LIGHT_ACCENT,
     PAGE_SIZE,
     REMOTE,
     UNCHECKED,
@@ -24,7 +25,7 @@ from .flatpak import (
     scope_args,
 )
 from .installer import stream_command
-from .helptext import USAGE_GUIDE, about_text
+from .helptext import SHORTCUTS, USAGE_GUIDE, about_text, shortcuts_text
 from .resources import load_icon
 from .theme import (
     BOOTSTRAP_AVAILABLE,
@@ -33,6 +34,7 @@ from .theme import (
     dark_theme_settings,
     is_bootstrap,
     polish_active_theme,
+    stripe_colors,
     system_prefers_dark,
 )
 
@@ -65,6 +67,8 @@ class FlathubBrowser(tk.Tk):
         self._dark_ttk_ok = False
         self._bootstrap = is_bootstrap(self.style)
         self._dialogs = {}
+        self._dialog_texts = {}
+        self._shortcut_tree = None
         self._icon_refs = []
 
         self._build_widgets()
@@ -73,9 +77,9 @@ class FlathubBrowser(tk.Tk):
         self._build_shortcuts()
         self.after(100, self.poll_log)
 
-    # -- layout: primary actions up top; secondary ones in Options ------
+    # -- layout: single toolbar; selection status in the statusbar -----
     def _build_widgets(self):
-        # Row 1: primary actions + two dropdowns (Options, Help)
+        # Single toolbar: workflow left-to-right + two dropdowns
         bar = ttk.Frame(self, padding=(8, 8, 8, 4))
         bar.pack(fill="x")
 
@@ -90,6 +94,15 @@ class FlathubBrowser(tk.Tk):
         status_cb.pack(side="left")
         status_cb.bind("<<ComboboxSelected>>", self.on_status_filter_change)
 
+        ttk.Label(bar, text="Filter:").pack(side="left", padx=(8, 0))
+        entry = ttk.Entry(bar, textvariable=self.filter_var, width=26)
+        entry.pack(side="left", padx=(4, 0))
+        entry.bind("<KeyRelease>", lambda e: self.schedule_filter())
+        self.filter_entry = entry
+        ttk.Button(bar, text="Select page",
+                   command=self.select_all_visible).pack(side="left", padx=(8, 0))
+        ttk.Button(bar, text="Clear", command=self.clear_selection).pack(
+            side="left", padx=4)
         ttk.Button(bar, text="Install selected", style="Accent.TButton",
                    command=self.install_selected).pack(side="left", padx=(8, 0))
 
@@ -121,30 +134,15 @@ class FlathubBrowser(tk.Tk):
         help_menu = tk.Menu(help_btn, tearoff=0)
         help_menu.add_command(label="How to use…", accelerator="F1",
                               command=self.show_help)
+        help_menu.add_command(label="Keyboard shortcuts…", accelerator="Ctrl+K",
+                              command=self.show_shortcuts)
+        help_menu.add_separator()
         help_menu.add_command(label="About…", command=self.show_about)
         help_btn.configure(menu=help_menu)
         help_btn.pack(side="left", padx=(8, 0))
         self._help_menu = help_menu  # keep a ref alongside the menubutton
 
-        # Row 2: search + selection (Save/Load act on the selection, so live here)
-        filt = ttk.Frame(self, padding=(8, 0, 8, 4))
-        filt.pack(fill="x")
-        ttk.Label(filt, text="Filter:").pack(side="left")
-        entry = ttk.Entry(filt, textvariable=self.filter_var, width=32)
-        entry.pack(side="left", padx=(4, 0))
-        entry.bind("<KeyRelease>", lambda e: self.schedule_filter())
-        self.filter_entry = entry
-        ttk.Button(filt, text="Select page",
-                   command=self.select_all_visible).pack(side="left", padx=(8, 0))
-        ttk.Button(filt, text="Clear", command=self.clear_selection).pack(
-            side="left", padx=4)
-        ttk.Label(filt, textvariable=self.selected_count).pack(side="left", padx=8)
-        ttk.Button(filt, text="Load…",
-                   command=self.load_selection_dialog).pack(side="right")
-        ttk.Button(filt, text="Save…",
-                   command=self.save_selection_dialog).pack(side="right", padx=(0, 4))
-
-        # Status line doubles as the busy-indicator row (spinner + Working…)
+        # Status line: app status + selection count + busy indicator
         statusbar = ttk.Frame(self, padding=(8, 0, 8, 2))
         statusbar.pack(fill="x")
         self.status = tk.StringVar(
@@ -155,6 +153,8 @@ class FlathubBrowser(tk.Tk):
         self.progress = ttk.Progressbar(statusbar, mode="indeterminate",
                                         length=120)
         self.progress.pack(side="right", padx=(0, 6))
+        ttk.Label(statusbar, textvariable=self.selected_count).pack(
+            side="right", padx=(0, 10))
 
         columns = ("sel", "status", "name", "appid", "summary")
         self.tree = ttk.Treeview(self, columns=columns, show="headings",
@@ -307,6 +307,12 @@ class FlathubBrowser(tk.Tk):
         try:
             self.tree.tag_configure("even", background=stripes[0])
             self.tree.tag_configure("odd", background=stripes[1])
+            if self._shortcut_tree is not None \
+                    and self._shortcut_tree.winfo_exists():
+                self._shortcut_tree.tag_configure("even",
+                                                  background=stripes[0])
+                self._shortcut_tree.tag_configure("odd",
+                                                  background=stripes[1])
         except tk.TclError:
             pass
 
@@ -553,6 +559,7 @@ class FlathubBrowser(tk.Tk):
         self.bind("<Control-s>", lambda e: self.save_selection_dialog())
         self.bind("<Control-o>", lambda e: self.load_selection_dialog())
         self.bind("<Control-Return>", lambda e: self.install_selected())
+        self.bind("<Control-k>", lambda e: self.show_shortcuts())
         self.tree.bind("<Control-a>", self.on_select_all_key)
         self.filter_entry.bind("<Escape>", lambda e: self.clear_filter())
 
@@ -643,26 +650,116 @@ class FlathubBrowser(tk.Tk):
         self._dialogs[key] = dlg
         return dlg
 
+    def _title_font(self, delta=6):
+        try:
+            font = tkfont.nametofont("TkDefaultFont").copy()
+            font.configure(size=font["size"] + delta, weight="bold")
+        except tk.TclError:
+            font = "TkDefaultFont"
+        return font
+
+    def _accent_color(self):
+        if self._bootstrap:
+            return self.style.colors.primary
+        if self._is_dark_mode():
+            return DARK_COLORS["accent"]
+        return LIGHT_ACCENT
+
+    def _style_dialog_text(self, widget):
+        self._style_text_widget(widget)
+        widget.tag_configure("h2", font=self._title_font(2),
+                             foreground=self._accent_color())
+        try:
+            widget.tag_configure("code",
+                                 font=tkfont.nametofont("TkFixedFont"))
+        except tk.TclError:
+            pass
+
+    def _tag_guide_markup(self, text):
+        for lineno, line in enumerate(
+                text.get("1.0", "end").splitlines(), start=1):
+            stripped = line.strip()
+            if len(stripped) > 8 and stripped.isupper():
+                text.tag_add("h2", f"{lineno}.0", f"{lineno}.end")
+        start = "1.0"
+        while True:
+            opening = text.search("`", start, stopindex="end")
+            if not opening:
+                break
+            closing = text.search("`", f"{opening}+1c", stopindex="end")
+            if not closing:
+                break
+            text.tag_add("code", opening, f"{closing}+1c")
+            start = f"{closing}+1c"
+
     def show_help(self):
-        dlg = self._single_dialog("help", "How to use", "760x560")
+        dlg = self._single_dialog("help", "How to use", "780x600")
         if dlg is None:
+            self._style_dialog_text(self._dialog_texts["help"])
             return
-        frame = ttk.Frame(dlg, padding=10)
+        header = ttk.Frame(dlg, padding=(14, 12, 14, 0))
+        header.pack(fill="x")
+        ttk.Label(header, text="How to use",
+                  font=self._title_font()).pack(anchor="w")
+        ttk.Label(header,
+                  text="The full guide lives here — press F1 anytime.").pack(
+                      anchor="w", pady=(0, 6))
+        frame = ttk.Frame(dlg, padding=(14, 0, 14, 10))
         frame.pack(fill="both", expand=True)
-        text = tk.Text(frame, wrap="word")
+        text = tk.Text(frame, wrap="word", relief="flat",
+                       highlightthickness=0,
+                       font=tkfont.nametofont("TkTextFont"))
         scroll = ttk.Scrollbar(frame, command=text.yview)
         text.configure(yscrollcommand=scroll.set)
-        text.insert("1.0", USAGE_GUIDE)
+        # the guide title lives in the header above; skip it in the body
+        text.insert("1.0", "\n".join(USAGE_GUIDE.splitlines()[2:]))
+        self._tag_guide_markup(text)
         text.configure(state="disabled")
-        self._style_text_widget(text)
+        self._style_dialog_text(text)
+        self._dialog_texts["help"] = text
         text.pack(side="left", fill="both", expand=True)
         scroll.pack(side="right", fill="y")
         ttk.Button(dlg, text="Close",
                    command=dlg.destroy).pack(pady=(0, 10))
 
-    def show_about(self):
-        dlg = self._single_dialog("about", "About", "480x420")
+    def show_shortcuts(self):
+        dlg = self._single_dialog("shortcuts", "Keyboard shortcuts",
+                                  "600x420")
         if dlg is None:
+            return
+        frame = ttk.Frame(dlg, padding=(14, 12, 14, 10))
+        frame.pack(fill="both", expand=True)
+        ttk.Label(frame, text="Keyboard shortcuts",
+                  font=self._title_font()).pack(anchor="w")
+        ttk.Label(frame,
+                  text="These work anywhere in the app window.").pack(
+                      anchor="w", pady=(0, 8))
+        table = ttk.Frame(frame)
+        table.pack(fill="both", expand=True)
+        tree = ttk.Treeview(table, columns=("keys", "action"),
+                            show="headings", height=9)
+        tree.heading("keys", text="Keys")
+        tree.heading("action", text="Action")
+        tree.column("keys", width=150, stretch=False)
+        tree.column("action", width=380)
+        stripes = stripe_colors(self._is_dark_mode())
+        tree.tag_configure("even", background=stripes[0])
+        tree.tag_configure("odd", background=stripes[1])
+        for index, (keys, action) in enumerate(SHORTCUTS):
+            tree.insert("", "end", values=(keys, action),
+                        tags=("even" if index % 2 == 0 else "odd",))
+        self._shortcut_tree = tree
+        scroll = ttk.Scrollbar(table, command=tree.yview)
+        tree.configure(yscrollcommand=scroll.set)
+        tree.pack(side="left", fill="both", expand=True)
+        scroll.pack(side="right", fill="y")
+        ttk.Button(frame, text="Close",
+                   command=dlg.destroy).pack(pady=(8, 0))
+
+    def show_about(self):
+        dlg = self._single_dialog("about", "About", "480x440")
+        if dlg is None:
+            self._style_dialog_text(self._dialog_texts["about"])
             return
         frame = ttk.Frame(dlg, padding=16)
         frame.pack(fill="both", expand=True)
@@ -670,18 +767,16 @@ class FlathubBrowser(tk.Tk):
         if icon is not None:
             self._icon_refs.append(icon)
             ttk.Label(frame, image=icon).pack(pady=(4, 8))
-        title = ttk.Label(frame, text="Flatpak Batch Installer")
-        title.pack()
-        try:
-            title.configure(font=("TkDefaultFont", 13, "bold"))
-        except tk.TclError:
-            pass
+        ttk.Label(frame, text="Flatpak Batch Installer",
+                  font=self._title_font(4)).pack()
         ttk.Label(frame, text=f"Version {__version__}").pack(pady=(0, 8))
         body = tk.Text(frame, wrap="word", height=9, relief="flat",
-                       highlightthickness=0)
+                       highlightthickness=0,
+                       font=tkfont.nametofont("TkTextFont"))
         body.insert("1.0", about_text(__version__).split("\n", 2)[2])
         body.configure(state="disabled")
-        self._style_text_widget(body)
+        self._style_dialog_text(body)
+        self._dialog_texts["about"] = body
         body.pack(fill="both", expand=True)
         ttk.Button(frame, text="Close",
                    command=dlg.destroy).pack(pady=(8, 0))
