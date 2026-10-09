@@ -1,7 +1,25 @@
-# Flathub Catalog Installer
+![Flathub Catalog Installer](assets/banner.png)
+
+[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
+[![Release](../../actions/workflows/release.yml/badge.svg)](../../actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](pyproject.toml)
 
 Browse/search the Flathub catalog, select multiple apps, install them in one
 Flatpak operation. GUI first, CLI capable, **stdlib only** (Python + Tkinter).
+
+## Install
+
+| Method | Command | Notes |
+|---|---|---|
+| **AppImage** (recommended) | Download `Flathub-Catalog-Installer-*.AppImage` from [Releases](../../releases), `chmod +x`, run | Works on any distro; bundles Python + Tk |
+| **pipx** | `pipx install git+https://github.com/example/flathub-catalog-installer` | Needs Python 3.10+, Tk, Flatpak on host |
+| **From source** | `python3 flathub-gui.py` | Developers; same host requirements |
+| **Desktop shortcut** | `make install-user` | Adds launcher + icon, no root |
+
+See [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md) for the full comparison
+(AppImage vs pipx vs native packages vs Flatpak vs Snap) and build
+instructions.
 
 ## Requirements
 
@@ -24,6 +42,8 @@ python3 flathub-gui.py
    Selection is kept when you change pages.
 5. Browse pages with **< Prev / Next >** (rows/page: 100/200/500).
 6. Click **Install selected**, review the confirmation list, confirm.
+7. Stuck? Press **F1** or the **?** button — the full guide is built in
+   (also: `python3 flathub-gui.py --help-guide`).
 
 Long operations (catalog load, metadata update, install) run in background
 threads. The **progress bar + "Working…" label** is only a busy spinner: it
@@ -51,6 +71,7 @@ Flatpak output streams into the log area below the table.
 python3 flathub-gui.py --list --scope user --search gimp
 python3 flathub-gui.py --installed --scope system
 python3 flathub-gui.py --install org.gimp.GIMP org.videolan.VLC --scope user
+python3 flathub-gui.py --help-guide
 python3 flathub-gui.py --version
 ```
 
@@ -63,14 +84,20 @@ flathub-gui.py      thin launcher
 flatpak-gui.py      deprecated alias (warns, delegates)
 flathub_gui/
   __init__.py       version
+  __main__.py       `python -m flathub_gui`
   app.py            CLI parsing + GUI entry point
   catalog.py        parse/filter/paginate catalog, save/load selections
   config.py         constants (remote, scope, page size, palette)
   flatpak.py        flatpak CLI wrappers + error diagnosis
+  helptext.py       usage guide + About text (used by GUI and CLI)
   installer.py      streaming batch-install runner
   models.py         App dataclass
+  resources.py      bundled icon access
   theme.py          dark-mode ttk theme + detection
   ui.py             FlathubBrowser GUI
+assets/             icon source + generated PNGs, hicolor set, banner
+packaging/          desktop file, AppStream metainfo, AppImage + Flatpak builds
+docs/               DISTRIBUTION.md (packaging research + how-tos)
 tests/              unittest suite (run with `make test`)
 ```
 
@@ -91,4 +118,4 @@ See [AGENT.md](AGENT.md) for contributor/agent notes,
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Security reports: [SECURITY.md](SECURITY.md).

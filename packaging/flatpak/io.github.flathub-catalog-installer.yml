@@ -1,0 +1,36 @@
+# Experimental Flatpak packaging for Flathub Catalog Installer.
+#
+# CAVEAT: this app drives the HOST `flatpak` binary, which a sandbox cannot
+# see. Two ways to run it as a Flatpak:
+#   A. Unsandboxed helper (pragmatic): --talk-name=org.freedesktop.Flatpak
+#      plus `flatpak-spawn --host flatpak ...` — needs a code change in
+#      flathub_gui/flatpak.py + installer.py (wrap commands when the
+#      FLATPAK_ID env var is set). Works, but Flathub reviewers scrutinize
+#      sandbox escapes.
+#   B. Native rewrite (proper): use the org.freedesktop.Flatpak D-Bus
+#      Transaction API instead of the CLI — bigger change, needs python gi.
+# Until one of those lands, prefer the AppImage / pipx routes
+# (see docs/DISTRIBUTION.md). This manifest builds and runs the GUI/CLI;
+# catalog/install calls will fail inside the sandbox until (A) or (B).
+app-id: io.github.flathub-catalog-installer
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: flathub-gui
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+modules:
+  - name: flathub-catalog-installer
+    buildsystem: simple
+    build-commands:
+      - pip3 install --no-deps --prefix=/app .
+      - install -Dm644 packaging/desktop/io.github.flathub-catalog-installer.desktop /app/share/applications/io.github.flathub-catalog-installer.desktop
+      - install -Dm644 packaging/metainfo/io.github.flathub-catalog-installer.metainfo.xml /app/share/metainfo/io.github.flathub-catalog-installer.metainfo.xml
+      - for s in 16 32 48 64 128 256 512; do install -Dm644 assets/hicolor/${s}x${s}/apps/io.github.flathub-catalog-installer.png /app/share/icons/hicolor/${s}x${s}/apps/io.github.flathub-catalog-installer.png; done
+    sources:
+      - type: dir
+        path: ../..

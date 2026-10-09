@@ -5,6 +5,7 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+from . import __version__
 from .catalog import filter_rows, load_selection, paginate, save_selection
 from .config import (
     CHECKED,
@@ -23,6 +24,8 @@ from .flatpak import (
     scope_args,
 )
 from .installer import stream_command
+from .helptext import USAGE_GUIDE, about_text
+from .resources import load_icon
 from .theme import dark_theme_settings, system_prefers_dark
 
 
@@ -52,9 +55,14 @@ class FlathubBrowser(tk.Tk):
         self.style = ttk.Style(self)
         self._base_theme = self.style.theme_use()
         self._dark_ttk_ok = False
+        self._dialogs = {}
+        self._icon_refs = []
 
         self._build_widgets()
         self._init_theme()
+        self._set_window_icon()
+        self._build_menubar()
+        self.bind("<F1>", lambda e: self.show_help())
         self.after(100, self.poll_log)
 
     # -- layout: two compact top rows; pager lives under the table --------
@@ -88,6 +96,9 @@ class FlathubBrowser(tk.Tk):
 
         ttk.Checkbutton(bar, text="Dark mode", variable=self.theme_var,
                         command=self.toggle_theme).pack(side="left", padx=(8, 0))
+
+        ttk.Button(bar, text="?", width=3,
+                   command=self.show_help).pack(side="left", padx=(4, 0))
 
         # Row 2: search + selection (Save/Load act on the selection, so live here)
         filt = ttk.Frame(self, padding=(8, 0, 8, 4))
@@ -482,6 +493,94 @@ class FlathubBrowser(tk.Tk):
             msg += f" {len(unknown)} not in current catalog view."
             self.log_queue.put("Unknown IDs from file: " + ", ".join(unknown[:20]))
         self.status.set(msg)
+
+    # -- help, about, window icon --------------------------------------
+    def _set_window_icon(self):
+        icon = load_icon()
+        if icon is not None:
+            self._icon_refs.append(icon)
+            try:
+                self.iconphoto(True, icon)
+            except tk.TclError:
+                pass
+
+    def _build_menubar(self):
+        menubar = tk.Menu(self)
+        help_menu = tk.Menu(menubar, tearoff=0)
+        help_menu.add_command(label="How to use…", accelerator="F1",
+                              command=self.show_help)
+        help_menu.add_command(label="About…", command=self.show_about)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        self.configure(menu=menubar)
+
+    def _style_text_widget(self, widget):
+        if self.theme_var.get() and self._dark_ttk_ok:
+            c = DARK_COLORS
+            widget.configure(background=c["bg_alt"], foreground=c["fg"],
+                             insertbackground=c["fg"],
+                             selectbackground=c["accent"],
+                             selectforeground=c["accent_fg"])
+        else:
+            widget.configure(background=self._light_text["background"],
+                             foreground=self._light_text["foreground"],
+                             insertbackground=self._light_text.get(
+                                 "insertbackground", "black"))
+
+    def _single_dialog(self, key, title, geometry):
+        dlg = self._dialogs.get(key)
+        if dlg is not None and dlg.winfo_exists():
+            dlg.lift()
+            dlg.focus_force()
+            return None
+        dlg = tk.Toplevel(self)
+        dlg.title(title)
+        dlg.geometry(geometry)
+        dlg.transient(self)
+        self._dialogs[key] = dlg
+        return dlg
+
+    def show_help(self):
+        dlg = self._single_dialog("help", "How to use", "760x560")
+        if dlg is None:
+            return
+        frame = ttk.Frame(dlg, padding=10)
+        frame.pack(fill="both", expand=True)
+        text = tk.Text(frame, wrap="word")
+        scroll = ttk.Scrollbar(frame, command=text.yview)
+        text.configure(yscrollcommand=scroll.set)
+        text.insert("1.0", USAGE_GUIDE)
+        text.configure(state="disabled")
+        self._style_text_widget(text)
+        text.pack(side="left", fill="both", expand=True)
+        scroll.pack(side="right", fill="y")
+        ttk.Button(dlg, text="Close",
+                   command=dlg.destroy).pack(pady=(0, 10))
+
+    def show_about(self):
+        dlg = self._single_dialog("about", "About", "480x420")
+        if dlg is None:
+            return
+        frame = ttk.Frame(dlg, padding=16)
+        frame.pack(fill="both", expand=True)
+        icon = load_icon(subsample=4)  # 64px
+        if icon is not None:
+            self._icon_refs.append(icon)
+            ttk.Label(frame, image=icon).pack(pady=(4, 8))
+        title = ttk.Label(frame, text="Flathub Catalog Installer")
+        title.pack()
+        try:
+            title.configure(font=("TkDefaultFont", 13, "bold"))
+        except tk.TclError:
+            pass
+        ttk.Label(frame, text=f"Version {__version__}").pack(pady=(0, 8))
+        body = tk.Text(frame, wrap="word", height=9, relief="flat",
+                       highlightthickness=0)
+        body.insert("1.0", about_text(__version__).split("\n", 2)[2])
+        body.configure(state="disabled")
+        self._style_text_widget(body)
+        body.pack(fill="both", expand=True)
+        ttk.Button(frame, text="Close",
+                   command=dlg.destroy).pack(pady=(8, 0))
 
     # -- install ----------------------------------------------------------
     def install_selected(self):

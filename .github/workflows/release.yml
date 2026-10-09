@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  artifacts:
+    runs-on: ubuntu-22.04   # oldest base: AppImage runs on newer distros
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk python3-pip squashfs-tools curl \
+            desktop-file-utils appstream
+
+      - name: Validate desktop file and metainfo
+        run: |
+          desktop-file-validate packaging/desktop/*.desktop
+          appstreamcli validate --no-net packaging/metainfo/*.metainfo.xml
+
+      - name: Run test suite
+        run: xvfb-run -a python3 -m unittest discover -s tests -v
+        env:
+          PYTHON3: /usr/bin/python3
+
+      - name: Build sdist + wheel
+        run: |
+          python -m pip install build
+          python -m build
+
+      - name: Build AppImage
+        run: bash packaging/appimage/build-appimage.sh
+        env:
+          PYTHON3: /usr/bin/python3
+
+      - name: Smoke-test AppImage (extract + CLI, no FUSE needed)
+        run: |
+          img=$(ls Flathub-Catalog-Installer-*.AppImage)
+          "$img" --appimage-extract >/dev/null
+          ./squashfs-root/AppRun --version
+          ./squashfs-root/AppRun --list --scope user --search test | head -3 || true
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+            Flathub-Catalog-Installer-*.AppImage
+          generate_release_notes: true

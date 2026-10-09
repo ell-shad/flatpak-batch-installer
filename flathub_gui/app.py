@@ -34,7 +34,14 @@ def run_cli(argv=None) -> int:
                         help="install given app IDs (batch, one flatpak call)")
     parser.add_argument("-V", "--version", action="version",
                         version=f"%(prog)s {__version__}")
+    parser.add_argument("--help-guide", action="store_true",
+                        help="print the in-app usage guide and exit")
     args = parser.parse_args(argv)
+
+    if args.help_guide:
+        from .helptext import USAGE_GUIDE
+        print(USAGE_GUIDE)
+        return 0
 
     if args.installed:
         ids, err = get_installed(args.scope)

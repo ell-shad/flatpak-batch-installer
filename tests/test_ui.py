@@ -76,6 +76,26 @@ class BrowserTest(unittest.TestCase):
         self.assertIn("Treeview", theme_module.dark_theme_settings())
         self.assertEqual(PAGE_SIZE, 200)
 
+    def test_help_and_about_dialogs(self):
+        self.app.show_help()
+        self.app.show_about()
+        titles = set()
+        for child in self.app.winfo_children():
+            if child.__class__.__name__ == "Toplevel":
+                titles.add(child.title())
+                child.destroy()
+        self.assertIn("How to use", titles)
+        self.assertIn("About", titles)
+        # reopening reuses a single dialog window
+        self.app.show_help()
+        self.app.show_help()
+        count = sum(1 for c in self.app.winfo_children()
+                    if c.__class__.__name__ == "Toplevel")
+        self.assertEqual(count, 1)
+        for child in self.app.winfo_children():
+            if child.__class__.__name__ == "Toplevel":
+                child.destroy()
+
 
 if __name__ == "__main__":
     unittest.main()

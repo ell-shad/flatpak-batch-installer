@@ -18,11 +18,16 @@ flathub_gui/
   catalog.py        parse/filter/paginate catalog + save/load selection files
   config.py         constants (REMOTE, DEFAULT_SCOPE, PAGE_SIZE, palette)
   flatpak.py        flatpak CLI wrappers + error diagnosis (no GUI imports)
-  installer.py      streaming batch-install runner
+  installer.py      stream_command() batch-install runner (GUI worker uses it)
   models.py         App dataclass
+  helptext.py       USAGE_GUIDE + about_text() (GUI Help/About + --help-guide)
+  resources.py      icon_path()/load_icon() — never raise, return None
   theme.py          dark-mode ttk theme + system-preference detection
   ui.py             FlathubBrowser GUI (only module importing tkinter)
-tests/              unittest suite (test_catalog, test_flatpak, test_ui)
+assets/             icon-source.jpg + make_assets.py pipeline + generated PNGs
+packaging/          desktop file, metainfo, AppImage + Flatpak builds
+docs/               DISTRIBUTION.md (packaging research + build how-tos)
+tests/              unittest suite (catalog, flatpak, ui, help)
 ```
 
 ## Commands
@@ -33,6 +38,8 @@ python3 -m unittest discover -s tests -v
 xvfb-run -a python3 -m unittest discover -s tests   # headless GUI tests
 python3 flathub-gui.py            # GUI
 python3 flathub-gui.py --list --scope user --search gimp   # CLI
+make assets                       # regenerate icon/banner from assets/icon-source.jpg
+bash packaging/appimage/build-appimage.sh  # AppImage (oldest supported base)
 ```
 
 ## Rules (from project history — respect them)

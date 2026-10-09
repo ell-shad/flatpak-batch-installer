@@ -31,3 +31,6 @@ Issues = "https://github.com/example/flathub-catalog-installer/issues"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["flathub_gui*"]
+
+[tool.setuptools.package-data]
+flathub_gui = ["data/*.png"]

@@ -14,6 +14,11 @@ venv/
 # Local user artifacts
 selected-apps.txt
 
+# Build artifacts
+*.AppImage
+appimage-build/
+squashfs-root/
+
 # Editors / OS
 .vscode/
 .idea/

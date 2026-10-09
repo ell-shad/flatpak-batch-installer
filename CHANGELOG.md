@@ -5,6 +5,24 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-09
+
+### Added
+
+- In-app Help (`?` button, Help menu, F1) documenting every control, and an
+  About dialog showing the app icon, version and license.
+- `--help-guide` CLI flag printing the same usage guide.
+- App icon + generated artwork (`assets/`: transparent master PNG, hicolor
+  icon set, README banner) with a reproducible `assets/make_assets.py`
+  pipeline; window and About-dialog icons at runtime.
+- Distribution: per-user desktop install (`make install-user`), AppImage
+  build script, experimental Flatpak manifest, AppStream metainfo,
+  `docs/DISTRIBUTION.md` comparing AppImage / pipx / native / Flatpak / Snap.
+- Repo automation: release workflow (sdist + wheel + AppImage attached to
+  GitHub Releases on `v*` tags), CodeQL scanning, Dependabot for actions.
+- Community files: `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.editorconfig`,
+  `.gitattributes`.
+
 ## [0.2.0] - 2026-10-07
 
 ### Added

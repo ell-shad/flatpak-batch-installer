@@ -1,0 +1,5 @@
+# Generated artwork stays in git (README + packagers need it).
+*.AppImage binary
+appimage-build/ export-ignore
+*.png binary
+*.jpg binary

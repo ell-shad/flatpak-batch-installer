@@ -15,6 +15,7 @@ No third-party Python packages are required — stdlib only.
 python3 flathub-gui.py          # run the GUI
 make test                       # run the test suite
 make lint                       # byte-compile everything
+make assets                     # regenerate artwork from assets/icon-source.jpg
 ```
 
 ## Conventions
@@ -37,6 +38,9 @@ make lint                       # byte-compile everything
 - Small, focused PRs. One feature/fix per PR.
 - `make test` must pass (CI runs it under `xvfb` on Python 3.10–3.13).
 - Use the PR template; link any related issue.
+- Packaging changes: see [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md);
+  validate with `desktop-file-validate` and
+  `appstreamcli validate --no-net`.
 
 ## Reporting bugs
 
