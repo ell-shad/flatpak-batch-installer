@@ -11,7 +11,7 @@ jobs:
   artifacts:
     runs-on: ubuntu-22.04   # oldest base: AppImage runs on newer distros
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
@@ -51,7 +51,7 @@ jobs:
           ./squashfs-root/AppRun --list --scope user --search test | head -3 || true
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/*
