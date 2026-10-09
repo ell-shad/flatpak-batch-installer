@@ -26,7 +26,7 @@ flatpak_batch_installer/
                     dark-mode detection, theme polish helpers
   ui.py             FlathubBrowser GUI (only module importing tkinter)
 assets/             icon-source.jpg + make_assets.py pipeline + generated PNGs
-packaging/          desktop file, metainfo, AppImage + Flatpak builds
+packaging/          desktop file, metainfo, AppImage + Debian + Flatpak builds
 docs/               DISTRIBUTION.md (packaging research + build how-tos)
 tests/              unittest suite (catalog, flatpak, ui, help)
 ```

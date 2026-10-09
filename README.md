@@ -14,10 +14,15 @@ graceful built-in fallback when absent).
 
 | Method | Command | Notes |
 |---|---|---|
-| **AppImage** (recommended) | Download `Flatpak-Batch-Installer-*.AppImage` from [Releases](../../releases), `chmod +x`, run | Works on any distro; bundles Python + Tk |
+| **.deb** (recommended, Debian-based) | Download `flatpak-batch-installer_*_all.deb` from [Releases](../../releases), `sudo apt install ./flatpak-batch-installer_*_all.deb` | Officially supported on Debian 12+, Ubuntu 22.04+ and derivatives (Mint, Pop!_OS…); pulls Tk/Pillow/Flatpak from the distro |
+| **AppImage** (universal) | Download `Flatpak-Batch-Installer-*.AppImage`, `chmod +x`, run | Any distro; bundles Python + Tk. Needs FUSE (`sudo apt install libfuse2`) or run with `--appimage-extract` |
 | **pipx** | `pipx install git+https://github.com/ell-shad/flatpak-batch-installer` | Needs Python 3.10+, Tk, Flatpak on host |
 | **From source** | `pip install ttkbootstrap` then `python3 flatpak-gui.py` | Developers; same host requirements |
 | **Desktop shortcut** | `make install-user` | Adds launcher + icon, no root |
+
+> **Support statement:** Debian-based systems (via `.deb`) are officially
+> supported and tested in CI. Other distros work through the AppImage or
+> pipx on a best-effort basis — bug reports welcome.
 
 See [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md) for the full comparison
 (AppImage vs pipx vs native packages vs Flatpak vs Snap) and build
@@ -104,7 +109,7 @@ flatpak_batch_installer/
   theme.py          dark-mode ttk theme + detection
   ui.py             FlathubBrowser GUI
 assets/             icon source + generated PNGs, hicolor set, banner
-packaging/          desktop file, AppStream metainfo, AppImage + Flatpak builds
+packaging/          desktop file, AppStream metainfo, AppImage + .deb + Flatpak builds
 docs/               DISTRIBUTION.md (packaging research + how-tos)
 tests/              unittest suite (run with `make test`)
 ```

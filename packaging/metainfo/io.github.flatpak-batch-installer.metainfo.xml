@@ -28,6 +28,11 @@
   </developer>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.6.1" date="2026-10-09">
+      <description>
+        <p>Working AppImage contents; new .deb package for Debian family.</p>
+      </description>
+    </release>
     <release version="0.6.0" date="2026-10-09">
       <description>
         <p>Keyboard shortcuts; license is now GNU GPLv3 or later.</p>

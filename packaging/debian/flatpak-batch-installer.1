@@ -1,0 +1,51 @@
+.TH FLATPAK-BATCH-INSTALLER 1 "October 2026" "flatpak-batch-installer @VERSION@" "User Commands"
+.SH NAME
+flatpak-batch-installer \- select many Flathub apps and install them at once
+.SH SYNOPSIS
+.B flatpak-batch-installer
+.RI [ OPTION ]...
+.SH DESCRIPTION
+.B flatpak-batch-installer
+loads the Flathub application catalog, lets you search it, tick multiple
+applications in a graphical table, and installs all selected apps in a
+single Flatpak operation. With no options it opens the GUI; with options
+it works headless from the terminal.
+.PP
+Everything the tool does is a standard
+.BR flatpak (1)
+command, always shown before it runs.
+.SH OPTIONS
+.TP
+.B \-\-list
+Print catalog apps, one per line (ID, name, summary).
+.TP
+.BI "\-\-search " TEXT
+Filter text for \fB\-\-list\fR.
+.TP
+.B \-\-installed
+Print installed app IDs for the chosen scope.
+.TP
+.BI "\-\-install " APP_ID...
+Install the given app IDs in one Flatpak call.
+.TP
+.BI "\-\-scope " user|system
+Flatpak installation scope (default: \fBuser\fR).
+.TP
+.B \-\-help\-guide
+Print the in-app usage guide and exit.
+.TP
+.BR \-V ", " \-\-version
+Print the version and exit.
+.TP
+.BR \-h ", " \-\-help
+Print command help and exit.
+.SH GUI KEYS
+F1 help, F5 reload, Ctrl+F filter, Ctrl+S / Ctrl+O save / load selection,
+Ctrl+Enter install, Ctrl+A tick page, Space tick rows, Esc clear filter.
+.SH SEE ALSO
+.BR flatpak (1),
+.BR flatpak-install (1)
+.SH AUTHOR
+Written by the Flatpak Batch Installer contributors.
+.br
+Bugs: https://github.com/ell-shad/flatpak-batch-installer/issues

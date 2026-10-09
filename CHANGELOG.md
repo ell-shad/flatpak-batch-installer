@@ -5,6 +5,23 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-09
+
+### Added
+
+- `.deb` packaging (`make deb`): officially supported install path for
+  Debian 12+, Ubuntu 22.04+ and derivatives, with man page, DEP-5
+  copyright, changelogs and lintian-clean metadata. Released artifacts
+  now include the `.deb` alongside the AppImage and Python packages.
+
+### Fixed
+
+- Release AppImage actually contained no app code (old distro pip built
+  an empty `UNKNOWN-0.0.0` package; checks masked it via the source
+  tree). The build now upgrades pip, verifies the bundle from a neutral
+  directory, and the AppRun no longer resolves modules from the
+  caller's cwd.
+
 ### Changed
 
 - Single-row toolbar: Filter, Select page and Clear moved up; Save/Load

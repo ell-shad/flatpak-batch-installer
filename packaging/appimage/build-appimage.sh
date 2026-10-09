@@ -80,14 +80,41 @@ done
 # --- the app itself --------------------------------------------------------
 SITE="$APPDIR/usr/lib/python3/dist-packages"
 mkdir -p "$SITE"
+PIP_OK=0
 if "$PY" -m pip --version >/dev/null 2>&1; then
+  # Distro pips can be ancient (Ubuntu 22.04 ships pip 22.0), and old pip
+  # silently produces broken local-dir installs (UNKNOWN-0.0.0, no
+  # modules). A modern pip is required for a working bundle.
+  # Newer distros additionally gate pip behind PEP 668, hence the retry.
+  PIP_FLAGS=""
+  "$PY" -m pip install -q --upgrade pip 2>/dev/null || PIP_FLAGS="--break-system-packages"
+  [ -n "$PIP_FLAGS" ] && "$PY" -m pip install -q --upgrade $PIP_FLAGS pip
   # with deps: bundles ttkbootstrap for the modern themes
-  "$PY" -m pip install --target="$SITE" "$ROOT" 2>&1 | tail -2
+  # shellcheck disable=SC2086
+  "$PY" -m pip install $PIP_FLAGS --target="$SITE" "$ROOT" 2>&1 | tail -2
+  PIP_OK=1
 else
   cp -a "$ROOT/flatpak_batch_installer" "$SITE/"
   echo "NOTE: no pip — bundled without ttkbootstrap, built-in themes apply"
 fi
-"$PY" -c "import sys; sys.path.insert(0, '$SITE'); import flatpak_batch_installer; print('bundled', flatpak_batch_installer.__version__)"
+# Verify the BUNDLE, not the source tree: a neutral cwd keeps sys.path[0]
+# from masking a missing/broken bundled package (this exact hole once
+# shipped an empty AppImage that still "passed" its checks).
+VERIFY_DIR="$(mktemp -d)"
+BUNDLED_PY="$APPDIR/usr/bin/$(basename "$PYBIN")"
+run_bundled() {
+  APPDIR="$APPDIR" PYTHONHOME="$APPDIR/usr" PYTHONPATH="$SITE" \
+  TCL_LIBRARY="$APPDIR/usr/share/$(basename "$TCL_DIR")" \
+  TK_LIBRARY="$APPDIR/usr/share/$(basename "$TK_DIR")" \
+  LD_LIBRARY_PATH="$APPDIR/usr/lib:${LD_LIBRARY_PATH:-}" \
+  "$BUNDLED_PY" "$@"
+}
+(cd "$VERIFY_DIR" && run_bundled -m flatpak_batch_installer --version)
+(cd "$VERIFY_DIR" && run_bundled -c "import flatpak_batch_installer; print('bundle imports ok', flatpak_batch_installer.__version__)")
+if [ "$PIP_OK" = 1 ]; then
+  (cd "$VERIFY_DIR" && run_bundled -c "import ttkbootstrap; from PIL import ImageTk; print('bundle themes ok', ttkbootstrap.__version__)")
+fi
+rm -rf "$VERIFY_DIR"
 
 # --- desktop integration ---------------------------------------------------
 cp "$ROOT/packaging/desktop/$APP_ID.desktop" "$APPDIR/"
@@ -96,6 +123,9 @@ cp "$ROOT/assets/hicolor/256x256/apps/$APP_ID.png" "$APPDIR/.DirIcon"
 cat > "$APPDIR/AppRun" <<EOF
 #!/bin/sh
 APPDIR="\$(dirname "\$(readlink -f "\$0")")"
+# Never resolve modules from the caller's cwd (a stray source checkout
+# there would shadow the bundle, or worse).
+cd "\$APPDIR" || exit 1
 export PYTHONHOME="\$APPDIR/usr"
 export PYTHONPATH="\$APPDIR/usr/lib/python3/dist-packages"
 export TCL_LIBRARY="\$APPDIR/usr/share/$(basename "$TCL_DIR")"

@@ -16,7 +16,9 @@ selected-apps.txt
 
 # Build artifacts
 *.AppImage
+*.deb
 appimage-build/
+deb-build/
 squashfs-root/
 
 # Editors / OS

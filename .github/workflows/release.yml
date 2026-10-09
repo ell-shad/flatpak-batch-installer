@@ -43,12 +43,17 @@ jobs:
         env:
           PYTHON3: /usr/bin/python3
 
+      - name: Build .deb (Debian-family primary artifact)
+        run: bash packaging/debian/build-deb.sh
+
       - name: Smoke-test AppImage (extract + CLI, no FUSE needed)
         run: |
-          img=$(ls Flatpak-Batch-Installer-*.AppImage)
-          ./"$img" --appimage-extract >/dev/null
-          ./squashfs-root/AppRun --version
-          ./squashfs-root/AppRun --list --scope user --search test | head -3 || true
+          root="$PWD"
+          img="$root/$(ls Flatpak-Batch-Installer-*.AppImage)"
+          "$img" --appimage-extract >/dev/null
+          cd "$(mktemp -d)"  # neutral cwd: must exercise the bundle, not the checkout
+          "$root/squashfs-root/AppRun" --version | grep -q flatpak-batch-installer
+          "$root/squashfs-root/AppRun" --list --scope user --search test | head -3 || true
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
@@ -56,4 +61,5 @@ jobs:
           files: |
             dist/*
             Flatpak-Batch-Installer-*.AppImage
+            flatpak-batch-installer_*_all.deb
           generate_release_notes: true

@@ -1,4 +1,4 @@
-.PHONY: run test lint clean assets appimage dist install-user uninstall-user
+.PHONY: run test lint clean assets appimage deb dist install-user uninstall-user
 
 run:
 	python3 flatpak-gui.py
@@ -15,6 +15,9 @@ assets:
 appimage:
 	bash packaging/appimage/build-appimage.sh
 
+deb:
+	bash packaging/debian/build-deb.sh
+
 dist:
 	python3 -m build
 
@@ -30,4 +33,4 @@ uninstall-user:
 clean:
 	find . -type d -name __pycache__ -prune -exec rm -rf {} +
 	find . -type f -name '*.pyc' -delete
-	rm -rf build dist *.egg-info appimage-build *.AppImage
+	rm -rf build dist *.egg-info appimage-build deb-build *.AppImage *.deb
