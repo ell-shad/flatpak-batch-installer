@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""Deprecated alias of flathub-gui.py (kept for backward compatibility)."""
+"""Flatpak Batch Installer launcher.
+
+GUI:  python3 flatpak-gui.py
+CLI:  python3 flatpak-gui.py --list [--scope user|system] [--search TEXT]
+      python3 flatpak-gui.py --installed [--scope user|system]
+      python3 flatpak-gui.py --install APP_ID [APP_ID ...] [--scope user|system]
+"""
 
 import sys
-import warnings
 
-warnings.warn(
-    "flatpak-gui.py is deprecated, use flathub-gui.py instead.",
-    DeprecationWarning,
-    stacklevel=2,
-)
-
-from flathub_gui.app import main
+from flatpak_batch_installer.app import main
 
 if __name__ == "__main__":
     sys.exit(main())

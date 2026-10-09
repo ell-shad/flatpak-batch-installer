@@ -9,7 +9,7 @@ emits:
   assets/icon.png               1024px master, transparent
   assets/hicolor/<s>x<s>/apps/<app>.png   freedesktop icon sizes
   assets/banner.png             1600x500 README/social banner
-  flathub_gui/data/icon.png     256px runtime icon (window + About dialog)
+  flatpak_batch_installer/data/icon.png     256px runtime icon (window + About dialog)
 
 Re-run after replacing icon-source.jpg. Requires Pillow (build-time only,
 not a runtime dependency of the app).
@@ -22,12 +22,12 @@ from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-APP_ID = "io.github.flathub-catalog-installer"
+APP_ID = "io.github.flatpak-batch-installer"
 
 SOURCE = os.path.join(HERE, "icon-source.jpg")
 MASTER = os.path.join(HERE, "icon.png")
 BANNER = os.path.join(HERE, "banner.png")
-RUNTIME = os.path.join(ROOT, "flathub_gui", "data", "icon.png")
+RUNTIME = os.path.join(ROOT, "flatpak_batch_installer", "data", "icon.png")
 HICOLOR_SIZES = (512, 256, 128, 64, 48, 32, 16)
 
 BG_THRESHOLD = 195   # min(R,G,B) above this counts as checkerboard background
@@ -119,7 +119,7 @@ def make_banner(icon, path):
                   fill=tuple(int(top[i] + (bottom[i] - top[i]) * t) for i in range(3)))
     mark = icon.resize((360, 360), Image.LANCZOS)
     banner.paste(mark, (70, 70), mark)
-    title = "Flathub Catalog Installer"
+    title = "Flatpak Batch Installer"
     subtitle = "Browse Flathub. Select many. Install once."
     max_w = W - 480 - 60
     size = 84

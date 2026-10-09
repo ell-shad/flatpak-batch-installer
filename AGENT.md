@@ -2,7 +2,7 @@
 
 ## What this is
 
-Flathub Catalog Installer: browse/search the Flathub catalog, multi-select
+Flatpak Batch Installer: browse/search the Flathub catalog, multi-select
 apps, batch-install via Flatpak. GUI-first (Tkinter), CLI-capable, **stdlib
 only** — never add third-party runtime dependencies without explicit user
 approval.
@@ -10,9 +10,9 @@ approval.
 ## Layout
 
 ```text
-flathub-gui.py      thin launcher (imports flathub_gui.app:main)
+flatpak-gui.py      thin launcher (imports flatpak_batch_installer.app:main)
 flatpak-gui.py      deprecated shim, warns and delegates
-flathub_gui/
+flatpak_batch_installer/
   __init__.py       version
   app.py            CLI parsing (run_cli), GUI entry (run_gui), main()
   catalog.py        parse/filter/paginate catalog + save/load selection files
@@ -36,8 +36,8 @@ tests/              unittest suite (catalog, flatpak, ui, help)
 make test                         # full suite (needs a display or xvfb)
 python3 -m unittest discover -s tests -v
 xvfb-run -a python3 -m unittest discover -s tests   # headless GUI tests
-python3 flathub-gui.py            # GUI
-python3 flathub-gui.py --list --scope user --search gimp   # CLI
+python3 flatpak-gui.py            # GUI
+python3 flatpak-gui.py --list --scope user --search gimp   # CLI
 make assets                       # regenerate icon/banner from assets/icon-source.jpg
 bash packaging/appimage/build-appimage.sh  # AppImage (oldest supported base)
 ```

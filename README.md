@@ -1,4 +1,4 @@
-![Flathub Catalog Installer](assets/banner.png)
+![Flatpak Batch Installer](assets/banner.png)
 
 [![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
 [![Release](../../actions/workflows/release.yml/badge.svg)](../../actions/workflows/release.yml)
@@ -12,9 +12,9 @@ Flatpak operation. GUI first, CLI capable, **stdlib only** (Python + Tkinter).
 
 | Method | Command | Notes |
 |---|---|---|
-| **AppImage** (recommended) | Download `Flathub-Catalog-Installer-*.AppImage` from [Releases](../../releases), `chmod +x`, run | Works on any distro; bundles Python + Tk |
-| **pipx** | `pipx install git+https://github.com/example/flathub-catalog-installer` | Needs Python 3.10+, Tk, Flatpak on host |
-| **From source** | `python3 flathub-gui.py` | Developers; same host requirements |
+| **AppImage** (recommended) | Download `Flatpak-Batch-Installer-*.AppImage` from [Releases](../../releases), `chmod +x`, run | Works on any distro; bundles Python + Tk |
+| **pipx** | `pipx install git+https://github.com/example/flatpak-batch-installer` | Needs Python 3.10+, Tk, Flatpak on host |
+| **From source** | `python3 flatpak-gui.py` | Developers; same host requirements |
 | **Desktop shortcut** | `make install-user` | Adds launcher + icon, no root |
 
 See [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md) for the full comparison
@@ -30,10 +30,10 @@ instructions.
 ## Quick start
 
 ```bash
-python3 flathub-gui.py
+python3 flatpak-gui.py
 ```
 
-(`flatpak-gui.py` still works but is deprecated.)
+(`flathub-gui.py` still works but is deprecated.)
 
 1. Pick **Scope**: `user` (safe default, no root needed) or `system`.
 2. Click **Load catalog**.
@@ -43,7 +43,7 @@ python3 flathub-gui.py
 5. Browse pages with **< Prev / Next >** (rows/page: 100/200/500).
 6. Click **Install selected**, review the confirmation list, confirm.
 7. Stuck? Press **F1** or open **Help → How to use** — the full guide is
-   built in (also: `python3 flathub-gui.py --help-guide`).
+   built in (also: `python3 flatpak-gui.py --help-guide`).
 
 Long operations (catalog load, metadata update, install) run in background
 threads. The **progress bar + "Working…" label** is only a busy spinner: it
@@ -68,23 +68,23 @@ Flatpak output streams into the log area below the table.
 ## CLI mode (optional, headless)
 
 ```bash
-python3 flathub-gui.py --list --scope user --search gimp
-python3 flathub-gui.py --installed --scope system
-python3 flathub-gui.py --install org.gimp.GIMP org.videolan.VLC --scope user
-python3 flathub-gui.py --help-guide
-python3 flathub-gui.py --version
+python3 flatpak-gui.py --list --scope user --search gimp
+python3 flatpak-gui.py --installed --scope system
+python3 flatpak-gui.py --install org.gimp.GIMP org.videolan.VLC --scope user
+python3 flatpak-gui.py --help-guide
+python3 flatpak-gui.py --version
 ```
 
-Or, after `pip install .`, use the `flathub-gui` command directly.
+Or, after `pip install .`, use the `flatpak-batch-installer` command directly.
 
 ## Project structure
 
 ```text
-flathub-gui.py      thin launcher
+flatpak-gui.py      thin launcher
 flatpak-gui.py      deprecated alias (warns, delegates)
-flathub_gui/
+flatpak_batch_installer/
   __init__.py       version
-  __main__.py       `python -m flathub_gui`
+  __main__.py       `python -m flatpak_batch_installer`
   app.py            CLI parsing + GUI entry point
   catalog.py        parse/filter/paginate catalog, save/load selections
   config.py         constants (remote, scope, page size, palette)
@@ -113,7 +113,7 @@ See [AGENT.md](AGENT.md) for contributor/agent notes,
 | Empty names/summaries | Click **Update**, or run `flatpak --user update --appstream flathub` |
 | Permission denied (system) | Switch Scope to **user** |
 | "multiple installations" prompt | Pick an explicit scope; bare `flatpak remote-ls flathub` is ambiguous when both scopes exist |
-| GUI won't start (no display) | Use CLI mode: `python3 flathub-gui.py --list --search TEXT` |
+| GUI won't start (no display) | Use CLI mode: `python3 flatpak-gui.py --list --search TEXT` |
 | Tkinter missing | Debian/Ubuntu: `sudo apt install python3-tk`; Fedora: `sudo dnf install python3-tkinter`; Arch: `sudo pacman -S tk` |
 
 ## License

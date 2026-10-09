@@ -1,4 +1,4 @@
-"""Shared configuration constants for the Flathub Catalog Installer."""
+"""Shared configuration constants for the Flatpak Batch Installer."""
 
 #: Flatpak remote to browse and install from.
 REMOTE = "flathub"

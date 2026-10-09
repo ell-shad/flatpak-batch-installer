@@ -12,7 +12,7 @@ def icon_path():
     """Filesystem path of the bundled app icon, or ``None``."""
     try:
         from importlib import resources
-        ref = resources.files("flathub_gui.data").joinpath("icon.png")
+        ref = resources.files("flatpak_batch_installer.data").joinpath("icon.png")
         if ref.is_file():
             return str(ref)
     except Exception:

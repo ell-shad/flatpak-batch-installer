@@ -32,7 +32,7 @@ from .theme import dark_theme_settings, polish_active_theme, system_prefers_dark
 class FlathubBrowser(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Flathub Catalog Installer")
+        self.title("Flatpak Batch Installer")
         self.geometry("1120x680")
 
         self.all_rows = []
@@ -581,7 +581,7 @@ class FlathubBrowser(tk.Tk):
         if icon is not None:
             self._icon_refs.append(icon)
             ttk.Label(frame, image=icon).pack(pady=(4, 8))
-        title = ttk.Label(frame, text="Flathub Catalog Installer")
+        title = ttk.Label(frame, text="Flatpak Batch Installer")
         title.pack()
         try:
             title.configure(font=("TkDefaultFont", 13, "bold"))

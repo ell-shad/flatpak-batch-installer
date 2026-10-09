@@ -1,10 +1,10 @@
-"""Unit tests for flathub_gui.helptext and flathub_gui.resources."""
+"""Unit tests for flatpak_batch_installer.helptext and flatpak_batch_installer.resources."""
 
 import unittest
 
-from flathub_gui import __version__
-from flathub_gui.helptext import USAGE_GUIDE, about_text
-from flathub_gui.resources import icon_path
+from flatpak_batch_installer import __version__
+from flatpak_batch_installer.helptext import USAGE_GUIDE, about_text
+from flatpak_batch_installer.resources import icon_path
 
 
 class GuideTest(unittest.TestCase):
@@ -25,7 +25,7 @@ class AboutTest(unittest.TestCase):
     def test_about(self):
         text = about_text(__version__)
         self.assertIn(__version__, text)
-        self.assertIn("Flathub Catalog Installer", text)
+        self.assertIn("Flatpak Batch Installer", text)
         self.assertIn("MIT", text)
 
 

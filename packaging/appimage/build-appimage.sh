@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Build a portable AppImage of Flathub Catalog Installer.
+# Build a portable AppImage of Flatpak Batch Installer.
 #
 # Run on the OLDEST distro you want to support (e.g. Ubuntu 22.04):
 #   bash packaging/appimage/build-appimage.sh
-# Output: Flathub-Catalog-Installer-<version>-<arch>.AppImage (repo root)
+# Output: Flatpak-Batch-Installer-<version>-<arch>.AppImage (repo root)
 #
 # What gets bundled: system Python + stdlib, _tkinter, Tcl/Tk libs and
 # scripts, plus this app installed via pip. The host provides: FUSE
@@ -12,13 +12,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-APP_ID="io.github.flathub-catalog-installer"
-APP_NAME="Flathub-Catalog-Installer"
+APP_ID="io.github.flatpak-batch-installer"
+APP_NAME="Flatpak-Batch-Installer"
 WORK="$ROOT/appimage-build"
 APPDIR="$WORK/AppDir"
 ARCH="$(uname -m)"
 PY="${PYTHON3:-python3}"   # override with PYTHON3=/usr/bin/python3 in CI
-VERSION="$($PY -c 'from flathub_gui import __version__; print(__version__)' 2>/dev/null || echo dev)"
+VERSION="$($PY -c 'from flatpak_batch_installer import __version__; print(__version__)' 2>/dev/null || echo dev)"
 OUT="$ROOT/${APP_NAME}-${VERSION}-${ARCH}.AppImage"
 
 command -v mksquashfs >/dev/null || { echo "need squashfs-tools (mksquashfs)"; exit 1; }
@@ -83,9 +83,9 @@ mkdir -p "$SITE"
 if "$PY" -m pip --version >/dev/null 2>&1; then
   "$PY" -m pip install --no-deps --target="$SITE" "$ROOT" 2>&1 | tail -2
 else
-  cp -a "$ROOT/flathub_gui" "$SITE/"
+  cp -a "$ROOT/flatpak_batch_installer" "$SITE/"
 fi
-"$PY" -c "import sys; sys.path.insert(0, '$SITE'); import flathub_gui; print('bundled', flathub_gui.__version__)"
+"$PY" -c "import sys; sys.path.insert(0, '$SITE'); import flatpak_batch_installer; print('bundled', flatpak_batch_installer.__version__)"
 
 # --- desktop integration ---------------------------------------------------
 cp "$ROOT/packaging/desktop/$APP_ID.desktop" "$APPDIR/"
@@ -99,7 +99,7 @@ export PYTHONPATH="\$APPDIR/usr/lib/python3/dist-packages"
 export TCL_LIBRARY="\$APPDIR/usr/share/$(basename "$TCL_DIR")"
 export TK_LIBRARY="\$APPDIR/usr/share/$(basename "$TK_DIR")"
 export LD_LIBRARY_PATH="\$APPDIR/usr/lib:\$LD_LIBRARY_PATH"
-exec "\$APPDIR/usr/bin/$(basename "$PYBIN")" -m flathub_gui "\$@"
+exec "\$APPDIR/usr/bin/$(basename "$PYBIN")" -m flatpak_batch_installer "\$@"
 EOF
 chmod +x "$APPDIR/AppRun"
 

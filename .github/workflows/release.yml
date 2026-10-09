@@ -45,7 +45,7 @@ jobs:
 
       - name: Smoke-test AppImage (extract + CLI, no FUSE needed)
         run: |
-          img=$(ls Flathub-Catalog-Installer-*.AppImage)
+          img=$(ls Flatpak-Batch-Installer-*.AppImage)
           "$img" --appimage-extract >/dev/null
           ./squashfs-root/AppRun --version
           ./squashfs-root/AppRun --list --scope user --search test | head -3 || true
@@ -55,5 +55,5 @@ jobs:
         with:
           files: |
             dist/*
-            Flathub-Catalog-Installer-*.AppImage
+            Flatpak-Batch-Installer-*.AppImage
           generate_release_notes: true

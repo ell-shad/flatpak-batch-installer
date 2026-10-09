@@ -3,14 +3,14 @@
      native (.deb/.rpm) and Flatpak packagers. Replace the placeholder
      id/url values with the real ones after publishing. -->
 <component type="desktop-application">
-  <id>io.github.flathub-catalog-installer</id>
+  <id>io.github.flatpak-batch-installer</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
-  <name>Flathub Catalog Installer</name>
+  <name>Flatpak Batch Installer</name>
   <summary>Select many Flathub apps and install them with one command</summary>
   <description>
     <p>
-      Flathub Catalog Installer loads the Flathub application catalog,
+      Flatpak Batch Installer loads the Flathub application catalog,
       lets you search it, tick multiple applications, and installs all
       selected apps in a single Flatpak operation.
     </p>
@@ -20,14 +20,19 @@
       list to a file once, restore it anywhere.
     </p>
   </description>
-  <launchable type="desktop-id">io.github.flathub-catalog-installer.desktop</launchable>
-  <url type="homepage">https://github.com/example/flathub-catalog-installer</url>
-  <url type="bugtracker">https://github.com/example/flathub-catalog-installer/issues</url>
+  <launchable type="desktop-id">io.github.flatpak-batch-installer.desktop</launchable>
+  <url type="homepage">https://github.com/example/flatpak-batch-installer</url>
+  <url type="bugtracker">https://github.com/example/flatpak-batch-installer/issues</url>
   <developer>
-    <name>Flathub Catalog Installer contributors</name>
+    <name>Flatpak Batch Installer contributors</name>
   </developer>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.4.0" date="2026-10-09">
+      <description>
+        <p>Renamed to Flatpak Batch Installer; UI polish without new dependencies.</p>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-10-09">
       <description>
         <p>Help and About dialogs, app icon and artwork, desktop integration files, AppImage/Flatpak/pip packaging.</p>

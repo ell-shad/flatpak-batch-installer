@@ -21,19 +21,19 @@ from the host `flatpak` needs extra bridging work.
 | **Native .deb / .rpm** | Per-distro builds | Yes — proper deps | High (per release, per distro) | Best UX, do via metadata provided; leave builds to distro packagers / contributors |
 | **Flatpak (self-hosted)** | Flathub reach | **No** — sandboxed; needs `flatpak-spawn --host` bridging or a D-Bus Transaction rewrite | Medium code change + Flathub review | Experimental (manifest provided, works except host calls) |
 | **Snap** | Ubuntu-centric | Strict mode blocks host flatpak; classic needs store approval | Medium + review friction | Not recommended |
-| **From source (`flathub-gui.py`)** | Everywhere | Yes | Zero | Fine for developers |
+| **From source (`flatpak-gui.py`)** | Everywhere | Yes | Zero | Fine for developers |
 
 ## Recommended setup
 
 1. **Primary: AppImage.** `bash packaging/appimage/build-appimage.sh` on the
    oldest supported base (Ubuntu 22.04) produces one
-   `Flathub-Catalog-Installer-<version>-x86_64.AppImage` that runs on Debian-,
+   `Flatpak-Batch-Installer-<version>-x86_64.AppImage` that runs on Debian-,
    Arch- and RPM-family desktops alike. It bundles Python + Tk; the host
    supplies only the display stack and `flatpak`. Attach it to every GitHub
    Release (the `release` workflow does this automatically on `v*` tags).
 2. **Secondary: PyPI/pipx.** Publish the existing `pyproject.toml` package
    (`python -m build`, `twine upload`) so technical users can
-   `pipx install flathub-catalog-installer`. Zero maintenance beyond releases.
+   `pipx install flatpak-batch-installer`. Zero maintenance beyond releases.
 3. **Native packages: enable, don't own.** This repo ships everything a
    packager needs — `.desktop` file, AppStream metainfo, hicolor icons,
    `setuptools` config — so a Debian/Fedora/Arch contributor can package it
@@ -47,14 +47,14 @@ from the host `flatpak` needs extra bridging work.
 
 ## Before publishing (rename checklist)
 
-The placeholder reverse-DNS ID `io.github.flathub-catalog-installer` (and
+The placeholder reverse-DNS ID `io.github.flatpak-batch-installer` (and
 `example` URLs) appear in these files — replace with the real publisher ID:
 
 - `assets/make_assets.py` (`APP_ID`, regenerates icon filenames)
 - `packaging/desktop/*.desktop` + `install-user.sh` + `Makefile`
 - `packaging/metainfo/*.metainfo.xml`
 - `packaging/flatpak/*.yml`
-- `flathub_gui/helptext.py` (`HOMEPAGE`, `ISSUES`), `pyproject.toml` URLs
+- `flatpak_batch_installer/helptext.py` (`HOMEPAGE`, `ISSUES`), `pyproject.toml` URLs
 - Regenerate assets (`make assets`) after the rename.
 
 ## Building each artifact

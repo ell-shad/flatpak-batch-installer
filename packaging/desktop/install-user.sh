@@ -4,8 +4,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-APP_ID="io.github.flathub-catalog-installer"
-BIN_NAME="flathub-catalog-installer"
+APP_ID="io.github.flatpak-batch-installer"
+BIN_NAME="flatpak-batch-installer"
 
 APPS_DIR="$HOME/.local/share/applications"
 ICON_DIR="$HOME/.local/share/icons/hicolor/256x256/apps"
@@ -16,13 +16,13 @@ mkdir -p "$APPS_DIR" "$ICON_DIR" "$BIN_DIR"
 cp "$ROOT/packaging/desktop/$APP_ID.desktop" "$APPS_DIR/"
 cp "$ROOT/assets/hicolor/256x256/apps/$APP_ID.png" "$ICON_DIR/"
 
-# Shim: prefer an installed flathub-gui entry point, else run from this checkout.
+# Shim: prefer an installed flatpak-batch-installer entry point, else run from this checkout.
 cat > "$BIN_DIR/$BIN_NAME" <<EOF
 #!/usr/bin/env bash
-if command -v flathub-gui >/dev/null 2>&1; then
-  exec flathub-gui "\$@"
+if command -v flatpak-batch-installer >/dev/null 2>&1; then
+  exec flatpak-batch-installer "\$@"
 else
-  exec python3 "$ROOT/flathub-gui.py" "\$@"
+  exec python3 "$ROOT/flatpak-gui.py" "\$@"
 fi
 EOF
 chmod +x "$BIN_DIR/$BIN_NAME"

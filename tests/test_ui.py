@@ -4,13 +4,13 @@ import unittest
 
 import tkinter as tk
 
-from flathub_gui import theme as theme_module
-from flathub_gui.config import DARK_COLORS, DARK_THEME_NAME, PAGE_SIZE
-from flathub_gui.models import App
+from flatpak_batch_installer import theme as theme_module
+from flatpak_batch_installer.config import DARK_COLORS, DARK_THEME_NAME, PAGE_SIZE
+from flatpak_batch_installer.models import App
 
 
 def make_browser():
-    from flathub_gui.ui import FlathubBrowser
+    from flatpak_batch_installer.ui import FlathubBrowser
     try:
         return FlathubBrowser()
     except tk.TclError as exc:

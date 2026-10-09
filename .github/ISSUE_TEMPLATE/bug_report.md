@@ -18,7 +18,7 @@ labels: bug
 - `python3 --version`:
 - Tkinter installed? (`python3 -c "import tkinter"`):
 - Install scope (user/system):
-- App version (`flathub-gui --version`):
+- App version (`flatpak-batch-installer --version`):
 
 ## Log output
 

@@ -1,11 +1,11 @@
 [Desktop Entry]
 Type=Application
 Version=1.0
-Name=Flathub Catalog Installer
+Name=Flatpak Batch Installer
 GenericName=Flatpak batch installer
 Comment=Browse the Flathub catalog, select many apps, install them with one Flatpak command
-Exec=flathub-catalog-installer
-Icon=io.github.flathub-catalog-installer
+Exec=flatpak-batch-installer
+Icon=io.github.flatpak-batch-installer
 Terminal=false
 Categories=System;PackageManager;
 Keywords=flatpak;flathub;install;package;software;catalog;batch;

@@ -1,4 +1,4 @@
-# Contributing to Flathub Catalog Installer
+# Contributing to Flatpak Batch Installer
 
 Thanks for helping out. The project is intentionally small and dependency-free;
 please keep it that way.
@@ -12,7 +12,7 @@ No third-party Python packages are required — stdlib only.
 - Flatpak with the Flathub remote (for live testing)
 
 ```bash
-python3 flathub-gui.py          # run the GUI
+python3 flatpak-gui.py          # run the GUI
 make test                       # run the test suite
 make lint                       # byte-compile everything
 make assets                     # regenerate artwork from assets/icon-source.jpg
@@ -23,7 +23,7 @@ make assets                     # regenerate artwork from assets/icon-source.jpg
 1. **Stdlib only.** Do not add heavy dependencies (no GTK/Qt bindings, no web
    frameworks). New stdlib modules are fine.
 2. **Never block the UI thread.** Flatpak calls go in background threads and
-   stream output to the log area (see `flathub_gui/installer.py`).
+   stream output to the log area (see `flatpak_batch_installer/installer.py`).
 3. **Prefer official Flatpak commands** over scraping flathub.org.
 4. **No destructive surprises.** Never uninstall anything unless the user
    explicitly requested it; install only after the confirmation dialog.

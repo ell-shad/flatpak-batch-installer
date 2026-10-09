@@ -18,8 +18,8 @@ from .flatpak import (
 
 def run_cli(argv=None) -> int:
     parser = argparse.ArgumentParser(
-        prog="flathub-gui",
-        description=f"Flathub Catalog Installer v{__version__} "
+        prog="flatpak-batch-installer",
+        description=f"Flatpak Batch Installer v{__version__} "
                     "(GUI by default; --list/--installed/--install for CLI use)")
     parser.add_argument("--scope", choices=["user", "system"],
                         default=DEFAULT_SCOPE,
@@ -81,7 +81,7 @@ def run_gui() -> int:
         FlathubBrowser().mainloop()
     except tk.TclError as exc:
         print(f"Cannot start GUI (no display?): {exc}", file=sys.stderr)
-        print("Headless alternative: flathub-gui --list --search TEXT", file=sys.stderr)
+        print("Headless alternative: flatpak-batch-installer --list --search TEXT", file=sys.stderr)
         return 1
     return 0
 

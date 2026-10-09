@@ -1,17 +1,17 @@
-"""Unit tests for flathub_gui.catalog (headless, stdlib unittest)."""
+"""Unit tests for flatpak_batch_installer.catalog (headless, stdlib unittest)."""
 
 import os
 import tempfile
 import unittest
 
-from flathub_gui.catalog import (
+from flatpak_batch_installer.catalog import (
     filter_rows,
     load_selection,
     paginate,
     parse_remote_ls,
     save_selection,
 )
-from flathub_gui.models import App
+from flatpak_batch_installer.models import App
 
 
 def make_apps(n=450):

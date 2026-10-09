@@ -1,8 +1,8 @@
-"""Unit tests for flathub_gui.flatpak (pure helpers only, no live calls)."""
+"""Unit tests for flatpak_batch_installer.flatpak (pure helpers only, no live calls)."""
 
 import unittest
 
-from flathub_gui.flatpak import (
+from flatpak_batch_installer.flatpak import (
     build_install_cmd,
     diagnose_catalog_error,
     scope_args,

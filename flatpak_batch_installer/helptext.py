@@ -1,11 +1,11 @@
 """In-app documentation: usage guide (Help) and About text.
 
 Kept as plain data so it is unit-testable without a display and reusable
-from the CLI (``flathub-gui --help-guide`` prints the guide).
+from the CLI (``flatpak-batch-installer --help-guide`` prints the guide).
 """
 
 USAGE_GUIDE = """\
-Flathub Catalog Installer — How to use
+Flatpak Batch Installer — How to use
 ======================================
 
 WHAT THIS APP DOES
@@ -63,20 +63,20 @@ TYPICAL FIXES
                             Status to "not-installed" to hide those.
 """
 
-HOMEPAGE = "https://github.com/example/flathub-catalog-installer"
-ISSUES = "https://github.com/example/flathub-catalog-installer/issues"
+HOMEPAGE = "https://github.com/example/flatpak-batch-installer"
+ISSUES = "https://github.com/example/flatpak-batch-installer/issues"
 
 
 def about_text(version: str) -> str:
     """Short About text with the running version filled in."""
     return (
-        "Flathub Catalog Installer\n"
+        "Flatpak Batch Installer\n"
         f"Version {version}\n"
         "\n"
         "Browse the Flathub catalog, select many apps,\n"
         "install them all with one Flatpak command.\n"
         "\n"
-        "MIT License — Flathub Catalog Installer contributors.\n"
+        "MIT License — Flatpak Batch Installer contributors.\n"
         "Built with Python + Tkinter (standard library only).\n"
         "\n"
         f"{HOMEPAGE}\n"

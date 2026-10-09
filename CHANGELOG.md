@@ -5,8 +5,15 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-09
+
 ### Changed
 
+- Renamed to **Flatpak Batch Installer**: package `flathub_gui` →
+  `flatpak_batch_installer`, launcher `flatpak-gui.py`, console script
+  `flatpak-batch-installer`, APP_ID `io.github.flatpak-batch-installer`.
+  Old `flathub-gui.py` is now the deprecated shim. The new name states
+  the key feature (batch installs) instead of the vague "catalog".
 - Single-item menubar removed: Help now lives in a toolbar `Help`
   dropdown (How to use / About), F1 still works.
 - Visual polish with stdlib ttk only: accent style on the Install button,
@@ -17,8 +24,8 @@ All notable changes to this project are documented here. Format follows
 
 ### Added
 
-- In-app Help (`?` button, Help menu, F1) documenting every control, and an
-  About dialog showing the app icon, version and license.
+- In-app Help (usage guide + About dialog, also F1) documenting every
+  control, and an About dialog showing icon, version and license.
 - `--help-guide` CLI flag printing the same usage guide.
 - App icon + generated artwork (`assets/`: transparent master PNG, hicolor
   icon set, README banner) with a reproducible `assets/make_assets.py`
@@ -35,8 +42,8 @@ All notable changes to this project are documented here. Format follows
 
 ### Added
 
-- Package layout: `flathub_gui/` (`app`, `catalog`, `config`, `flatpak`,
-  `installer`, `models`, `theme`, `ui`) with `flathub-gui.py` launcher.
+- Package layout: `flatpak_batch_installer/` (`app`, `catalog`, `config`, `flatpak`,
+  `installer`, `models`, `theme`, `ui`) with `flatpak-gui.py` launcher.
 - Pagination: full catalog browsable via Prev/Next pages, rows/page selector;
   the old 1000-row display cap is removed.
 - Dark mode toggle (stdlib `ttk.Style` only) with system-preference autodetect.
@@ -50,7 +57,7 @@ All notable changes to this project are documented here. Format follows
 ### Changed
 
 - Old single-file `flatpak-gui.py` is now a deprecated shim of
-  `flathub-gui.py`.
+  `flatpak-gui.py`.
 
 ## [0.1.0] - 2026-10-07
 
