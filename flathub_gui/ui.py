@@ -3,7 +3,7 @@
 import queue
 import threading
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, font as tkfont, messagebox, ttk
 
 from . import __version__
 from .catalog import filter_rows, load_selection, paginate, save_selection
@@ -26,7 +26,7 @@ from .flatpak import (
 from .installer import stream_command
 from .helptext import USAGE_GUIDE, about_text
 from .resources import load_icon
-from .theme import dark_theme_settings, system_prefers_dark
+from .theme import dark_theme_settings, polish_active_theme, system_prefers_dark
 
 
 class FlathubBrowser(tk.Tk):
@@ -61,7 +61,6 @@ class FlathubBrowser(tk.Tk):
         self._build_widgets()
         self._init_theme()
         self._set_window_icon()
-        self._build_menubar()
         self.bind("<F1>", lambda e: self.show_help())
         self.after(100, self.poll_log)
 
@@ -91,14 +90,20 @@ class FlathubBrowser(tk.Tk):
         status_cb.pack(side="left")
         status_cb.bind("<<ComboboxSelected>>", self.on_status_filter_change)
 
-        ttk.Button(bar, text="Install selected",
+        ttk.Button(bar, text="Install selected", style="Accent.TButton",
                    command=self.install_selected).pack(side="left", padx=(8, 0))
 
         ttk.Checkbutton(bar, text="Dark mode", variable=self.theme_var,
                         command=self.toggle_theme).pack(side="left", padx=(8, 0))
 
-        ttk.Button(bar, text="?", width=3,
-                   command=self.show_help).pack(side="left", padx=(4, 0))
+        help_btn = ttk.Menubutton(bar, text="Help")
+        help_menu = tk.Menu(help_btn, tearoff=0)
+        help_menu.add_command(label="How to use…", accelerator="F1",
+                              command=self.show_help)
+        help_menu.add_command(label="About…", command=self.show_about)
+        help_btn.configure(menu=help_menu)
+        help_btn.pack(side="left", padx=(8, 0))
+        self._help_menu = help_menu  # keep a ref alongside the menubutton
 
         # Row 2: search + selection (Save/Load act on the selection, so live here)
         filt = ttk.Frame(self, padding=(8, 0, 8, 4))
@@ -217,6 +222,23 @@ class FlathubBrowser(tk.Tk):
         if system_prefers_dark():
             self.theme_var.set(True)
             self._set_dark(True)
+        else:
+            self._apply_polish()
+
+    def _apply_polish(self):
+        """Modernize the active theme + match table stripes to the mode."""
+        dark = bool(self.theme_var.get() and self._dark_ttk_ok)
+        try:
+            heading_font = tkfont.nametofont("TkDefaultFont").copy()
+            heading_font.configure(weight="bold")
+        except tk.TclError:
+            heading_font = None
+        stripes = polish_active_theme(self.style, dark, heading_font)
+        try:
+            self.tree.tag_configure("even", background=stripes[0])
+            self.tree.tag_configure("odd", background=stripes[1])
+        except tk.TclError:
+            pass
 
     def toggle_theme(self):
         self._set_dark(self.theme_var.get())
@@ -228,6 +250,7 @@ class FlathubBrowser(tk.Tk):
         else:
             on = False
             self.style.theme_use(self._base_theme)
+        self._apply_polish()
         self.configure(background=c["bg"] if on else self._light_root_bg)
         if on:
             self.log.configure(background=c["bg_alt"], foreground=c["fg"],
@@ -358,11 +381,12 @@ class FlathubBrowser(tk.Tk):
             matches, self.page, self.page_size_value)
         self.tree.delete(*self.tree.get_children())
         self.row_by_iid.clear()
-        for app in page_items:
+        for index, app in enumerate(page_items):
             mark = CHECKED if app.app_id in self.selected_ids else UNCHECKED
             state = "Installed" if app.app_id in self.installed else ""
             iid = self.tree.insert("", "end", values=(
-                mark, state, app.name, app.app_id, app.summary))
+                mark, state, app.name, app.app_id, app.summary),
+                tags=("even" if index % 2 == 0 else "odd",))
             self.row_by_iid[iid] = app.app_id
         self.update_count()
         self.update_pager(len(matches), total_pages)
@@ -503,15 +527,6 @@ class FlathubBrowser(tk.Tk):
                 self.iconphoto(True, icon)
             except tk.TclError:
                 pass
-
-    def _build_menubar(self):
-        menubar = tk.Menu(self)
-        help_menu = tk.Menu(menubar, tearoff=0)
-        help_menu.add_command(label="How to use…", accelerator="F1",
-                              command=self.show_help)
-        help_menu.add_command(label="About…", command=self.show_about)
-        menubar.add_cascade(label="Help", menu=help_menu)
-        self.configure(menu=menubar)
 
     def _style_text_widget(self, widget):
         if self.theme_var.get() and self._dark_ttk_ok:

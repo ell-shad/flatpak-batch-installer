@@ -8,7 +8,14 @@ few kilobytes of style definitions.
 import os
 import subprocess
 
-from .config import DARK_COLORS
+from .config import (
+    ACCENT_FG,
+    DARK_COLORS,
+    DARK_STRIPES,
+    LIGHT_ACCENT,
+    LIGHT_ACCENT_ACTIVE,
+    LIGHT_STRIPES,
+)
 
 
 def system_prefers_dark() -> bool:
@@ -78,4 +85,33 @@ def dark_theme_settings() -> dict:
     }
 
 
-__all__ = ["dark_theme_settings", "system_prefers_dark"]
+def polish_active_theme(style, dark: bool, heading_font=None):
+    """Refine the *currently active* ttk theme (call after every switch).
+
+    Safe on any base theme (clam, default, ...): plain configure/map calls
+    only. Gives the app a flatter, more modern look without new deps:
+    roomier buttons, an accent style for the primary action, taller table
+    rows with a bold header. Returns the (even, odd) stripe colors so the
+    table can tag its rows to match the active mode.
+    """
+    style.configure("TButton", padding=(10, 6))
+    style.configure("TCheckbutton", padding=(4, 4))
+    style.configure("TEntry", padding=(6, 4))
+    style.configure("Treeview", rowheight=26)
+    if heading_font is not None:
+        style.configure("Treeview.Heading", font=heading_font)
+    if dark:
+        c = DARK_COLORS
+        accent, active = c["accent"], c["bg_hover"]
+    else:
+        accent, active = LIGHT_ACCENT, LIGHT_ACCENT_ACTIVE
+    style.configure("Accent.TButton", background=accent,
+                    foreground=ACCENT_FG, padding=(12, 6))
+    style.map("Accent.TButton",
+              background=[("active", active), ("pressed", active),
+                          ("disabled", c["bg_btn"] if dark else "#e9ecef")],
+              foreground=[("disabled", c["fg_dim"] if dark else "#6c757d")])
+    return DARK_STRIPES if dark else LIGHT_STRIPES
+
+
+__all__ = ["dark_theme_settings", "polish_active_theme", "system_prefers_dark"]

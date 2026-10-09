@@ -76,6 +76,28 @@ class BrowserTest(unittest.TestCase):
         self.assertIn("Treeview", theme_module.dark_theme_settings())
         self.assertEqual(PAGE_SIZE, 200)
 
+    def test_modern_chrome(self):
+        # no full-width menubar: Help lives in the toolbar dropdown
+        self.assertEqual(str(self.app.cget("menu")), "")
+        self.assertIsNotNone(self.app._help_menu)
+        self.assertEqual(
+            self.app._help_menu.entrycget(0, "label"), "How to use…")
+        self.assertEqual(
+            self.app._help_menu.entrycget(1, "label"), "About…")
+        # accent style for the primary action exists in both modes
+        for dark in (False, True):
+            self.app.theme_var.set(dark)
+            self.app.toggle_theme()
+            bg = self.app.style.lookup("Accent.TButton", "background")
+            self.assertTrue(bg, f"Accent.TButton missing in dark={dark}")
+        # rows carry alternating stripe tags
+        self.app.all_rows = [App(f"id{i}", f"N{i}", "") for i in range(4)]
+        self.app.apply_filter()
+        tags = [set(self.app.tree.item(i, "tags"))
+                for i in self.app.row_by_iid]
+        self.assertEqual(tags[0], {"even"})
+        self.assertEqual(tags[1], {"odd"})
+
     def test_help_and_about_dialogs(self):
         self.app.show_help()
         self.app.show_about()

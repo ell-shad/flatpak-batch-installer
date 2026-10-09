@@ -5,6 +5,14 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Single-item menubar removed: Help now lives in a toolbar `Help`
+  dropdown (How to use / About), F1 still works.
+- Visual polish with stdlib ttk only: accent style on the Install button,
+  roomier controls, bold table headers, alternating row stripes in both
+  light and dark modes.
+
 ## [0.3.0] - 2026-10-09
 
 ### Added

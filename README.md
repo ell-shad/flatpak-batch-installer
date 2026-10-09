@@ -42,8 +42,8 @@ python3 flathub-gui.py
    Selection is kept when you change pages.
 5. Browse pages with **< Prev / Next >** (rows/page: 100/200/500).
 6. Click **Install selected**, review the confirmation list, confirm.
-7. Stuck? Press **F1** or the **?** button — the full guide is built in
-   (also: `python3 flathub-gui.py --help-guide`).
+7. Stuck? Press **F1** or open **Help → How to use** — the full guide is
+   built in (also: `python3 flathub-gui.py --help-guide`).
 
 Long operations (catalog load, metadata update, install) run in background
 threads. The **progress bar + "Working…" label** is only a busy spinner: it

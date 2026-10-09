@@ -29,3 +29,13 @@ DARK_COLORS = {
     "accent_fg": "#ffffff",
     "border": "#555555",
 }
+
+#: Accent color for the primary action button in light mode
+#: (dark mode reuses DARK_COLORS["accent"]).
+LIGHT_ACCENT = "#0b5ed7"
+LIGHT_ACCENT_ACTIVE = "#0a58c4"
+ACCENT_FG = "#ffffff"
+
+#: Alternating table-row backgrounds per mode (even, odd).
+LIGHT_STRIPES = ("#ffffff", "#eef3f9")
+DARK_STRIPES = ("#1e1e1e", "#272c34")

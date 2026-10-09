@@ -37,7 +37,7 @@ WHAT IS WHAT
   Install selected  Install everything ticked, in ONE flatpak call.
                     Always asks for confirmation first.
   Dark mode ....... Switch the light/dark theme (auto-detects yours).
-  ? ............... This guide.
+  Help ............ This guide (How to use / About) — or press F1.
   Filter .......... Live search across app name, app ID and summary.
   Select page ..... Tick every app on the current page.
   Clear ........... Untick everything.
