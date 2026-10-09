@@ -18,9 +18,36 @@ def make_browser():
 
 
 class BrowserTest(unittest.TestCase):
+    # One shared root per process: ttkbootstrap.Style is a process-wide
+    # singleton bound to the first root, so per-test roots would leave
+    # later styles pointing at destroyed interpreters. State is reset
+    # in setUp; production always runs a single root anyway.
+    @classmethod
+    def setUpClass(cls):
+        cls.app = make_browser()
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            cls.app.destroy()
+        except tk.TclError:
+            pass
+
     def setUp(self):
-        self.app = make_browser()
-        self.addCleanup(self.app.destroy)
+        self.app.all_rows = []
+        self.app.installed = set()
+        self.app.selected_ids = set()
+        self.app.page = 0
+        self.app.page_size_value = PAGE_SIZE
+        self.app.page_size_var.set(str(PAGE_SIZE))
+        self.app.filter_var.set("")
+        self.app.status_filter_var.set("all")
+        self.app.theme_var.set(False)
+        self.app.toggle_theme()
+        for child in list(self.app.winfo_children()):
+            if child.__class__.__name__ == "Toplevel":
+                child.destroy()
+        self.app.apply_filter()
 
     def test_paging_reaches_everything(self):
         rows = [App(f"org.example.App{i}", f"App{i}", "s") for i in range(450)]
@@ -58,14 +85,21 @@ class BrowserTest(unittest.TestCase):
         self.assertEqual(len(self.app.row_by_iid), 1)
 
     def test_theme_toggle_round_trip(self):
+        from flatpak_batch_installer.theme import bootstrap_theme_name
         self.app.theme_var.set(False)
         self.app.toggle_theme()
         base = self.app.style.theme_use()
         light_bg = self.app.log.cget("background")
         self.app.theme_var.set(True)
         self.app.toggle_theme()
-        self.assertEqual(self.app.style.theme_use(), DARK_THEME_NAME)
-        self.assertEqual(self.app.log.cget("background"), DARK_COLORS["bg_alt"])
+        if self.app._bootstrap:
+            expected = bootstrap_theme_name(self.app.style, True)
+            expected_bg = self.app.style.colors.inputbg
+        else:
+            expected = DARK_THEME_NAME
+            expected_bg = DARK_COLORS["bg_alt"]
+        self.assertEqual(self.app.style.theme_use(), expected)
+        self.assertEqual(self.app.log.cget("background"), expected_bg)
         self.app.theme_var.set(False)
         self.app.toggle_theme()
         self.assertEqual(self.app.style.theme_use(), base)
@@ -97,6 +131,25 @@ class BrowserTest(unittest.TestCase):
                 for i in self.app.row_by_iid]
         self.assertEqual(tags[0], {"even"})
         self.assertEqual(tags[1], {"odd"})
+
+    @unittest.skipUnless(theme_module.BOOTSTRAP_AVAILABLE,
+                         "ttkbootstrap not installed")
+    def test_bootstrap_themes(self):
+        from flatpak_batch_installer.theme import bootstrap_theme_name
+        self.assertTrue(self.app._bootstrap)
+        self.app.theme_var.set(True)
+        self.app.toggle_theme()
+        self.assertEqual(
+            self.app.style.theme_use(),
+            bootstrap_theme_name(self.app.style, True))
+        # log follows the active Bootstrap palette, not our fallback grays
+        self.assertEqual(self.app.log.cget("background"),
+                         self.app.style.colors.inputbg)
+        self.app.theme_var.set(False)
+        self.app.toggle_theme()
+        self.assertEqual(
+            self.app.style.theme_use(),
+            bootstrap_theme_name(self.app.style, False))
 
     def test_help_and_about_dialogs(self):
         self.app.show_help()

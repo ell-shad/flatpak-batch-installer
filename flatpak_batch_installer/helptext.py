@@ -36,7 +36,9 @@ WHAT IS WHAT
                     or only the ones you ticked (selected).
   Install selected  Install everything ticked, in ONE flatpak call.
                     Always asks for confirmation first.
-  Dark mode ....... Switch the light/dark theme (auto-detects yours).
+  Dark mode ....... Switch the light/dark theme — modern Bootstrap-style
+                    themes when ttkbootstrap is installed, built-in
+                    themes otherwise (auto-detects yours).
   Help ............ This guide (How to use / About) — or press F1.
   Filter .......... Live search across app name, app ID and summary.
   Select page ..... Tick every app on the current page.

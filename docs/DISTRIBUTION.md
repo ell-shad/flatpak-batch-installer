@@ -42,8 +42,18 @@ from the host `flatpak` needs extra bridging work.
 4. **Flatpak: park it.** The manifest in `packaging/flatpak/` builds, but
    host `flatpak` calls need bridging first (see the manifest header for the
    two routes: `flatpak-spawn --host` wrapper vs D-Bus Transaction API).
-   Submitting that to Flathub before the bridging lands would ship a broken
-   app — don't.
+   Flathub's own submission rules confirm this reading (verified
+   2026-10-09 in the official requirements):
+   "host-dependent applications" and "system utilities … generally used on
+   host" are not accepted, and a future submission would additionally need
+   vendored PyPI sources (no network during build — relevant now that the
+   app depends on ttkbootstrap), complete English localisation, and a
+   trademark-clean name/icon. Our rename to *Flatpak Batch Installer*
+   already satisfies the last point: Flathub forbids implying official
+   affiliation via a vendor name ("Flathub … Installer" would have
+   violated it), while naming the open technology is the established
+   pattern (cf. Flatseal). Submitting before the bridging lands would
+   ship a broken app — don't.
 
 ## Before publishing (rename checklist)
 

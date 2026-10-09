@@ -26,7 +26,14 @@ from .flatpak import (
 from .installer import stream_command
 from .helptext import USAGE_GUIDE, about_text
 from .resources import load_icon
-from .theme import dark_theme_settings, polish_active_theme, system_prefers_dark
+from .theme import (
+    bootstrap_theme_name,
+    create_style,
+    dark_theme_settings,
+    is_bootstrap,
+    polish_active_theme,
+    system_prefers_dark,
+)
 
 
 class FlathubBrowser(tk.Tk):
@@ -52,9 +59,10 @@ class FlathubBrowser(tk.Tk):
         self.page_label_var = tk.StringVar(value="No catalog loaded.")
         self.busy_label_var = tk.StringVar(value="")
 
-        self.style = ttk.Style(self)
+        self.style = create_style(self)
         self._base_theme = self.style.theme_use()
         self._dark_ttk_ok = False
+        self._bootstrap = is_bootstrap(self.style)
         self._dialogs = {}
         self._icon_refs = []
 
@@ -203,15 +211,16 @@ class FlathubBrowser(tk.Tk):
 
     # -- theme (stdlib only, no extra deps) --------------------------------
     def _init_theme(self):
-        try:
-            if DARK_THEME_NAME not in self.style.theme_names():
-                parent = ("clam" if "clam" in self.style.theme_names()
-                          else self._base_theme)
-                self.style.theme_create(DARK_THEME_NAME, parent=parent,
-                                        settings=dark_theme_settings())
-            self._dark_ttk_ok = True
-        except tk.TclError:
-            self._dark_ttk_ok = False
+        if not self._bootstrap:
+            try:
+                if DARK_THEME_NAME not in self.style.theme_names():
+                    parent = ("clam" if "clam" in self.style.theme_names()
+                              else self._base_theme)
+                    self.style.theme_create(DARK_THEME_NAME, parent=parent,
+                                            settings=dark_theme_settings())
+                self._dark_ttk_ok = True
+            except tk.TclError:
+                self._dark_ttk_ok = False
         self._light_root_bg = self.cget("background")
         self._light_text = {
             "background": self.log.cget("background"),
@@ -225,9 +234,51 @@ class FlathubBrowser(tk.Tk):
         else:
             self._apply_polish()
 
+    def _is_dark_mode(self):
+        return bool(self.theme_var.get()
+                    and (self._bootstrap or self._dark_ttk_ok))
+
+    def _text_colors(self, dark):
+        """One dict for root bg, Text widgets and combobox popups alike."""
+        if self._bootstrap:
+            col = self.style.colors
+            return {
+                "root_bg": col.bg,
+                "background": col.inputbg,
+                "foreground": col.inputfg,
+                "insertbackground": col.inputfg,
+                "selectbackground": col.selectbg,
+                "selectforeground": col.selectfg,
+                "listbox_bg": col.inputbg,
+                "listbox_fg": col.inputfg,
+                "listbox_select_bg": col.selectbg,
+                "listbox_select_fg": col.selectfg,
+            }
+        if dark:
+            c = DARK_COLORS
+            return {
+                "root_bg": c["bg"],
+                "background": c["bg_alt"],
+                "foreground": c["fg"],
+                "insertbackground": c["fg"],
+                "selectbackground": c["accent"],
+                "selectforeground": c["accent_fg"],
+                "listbox_bg": c["bg_alt"],
+                "listbox_fg": c["fg"],
+                "listbox_select_bg": c["accent"],
+                "listbox_select_fg": c["accent_fg"],
+            }
+        colors = dict(self._light_text)
+        colors.setdefault("selectforeground", "black")
+        colors["root_bg"] = self._light_root_bg
+        colors.update({"listbox_bg": "white", "listbox_fg": "black",
+                       "listbox_select_bg": "#0078d7",
+                       "listbox_select_fg": "white"})
+        return colors
+
     def _apply_polish(self):
         """Modernize the active theme + match table stripes to the mode."""
-        dark = bool(self.theme_var.get() and self._dark_ttk_ok)
+        dark = self._is_dark_mode()
         try:
             heading_font = tkfont.nametofont("TkDefaultFont").copy()
             heading_font.configure(weight="bold")
@@ -244,29 +295,28 @@ class FlathubBrowser(tk.Tk):
         self._set_dark(self.theme_var.get())
 
     def _set_dark(self, on):
-        c = DARK_COLORS
-        if on and self._dark_ttk_ok:
+        on = bool(on)
+        if self._bootstrap:
+            self.style.theme_use(bootstrap_theme_name(self.style, on))
+        elif on and self._dark_ttk_ok:
             self.style.theme_use(DARK_THEME_NAME)
         else:
             on = False
             self.style.theme_use(self._base_theme)
         self._apply_polish()
-        self.configure(background=c["bg"] if on else self._light_root_bg)
-        if on:
-            self.log.configure(background=c["bg_alt"], foreground=c["fg"],
-                               insertbackground=c["fg"],
-                               selectbackground=c["accent"],
-                               selectforeground=c["accent_fg"])
-            self.option_add("*TCombobox*Listbox.background", c["bg_alt"])
-            self.option_add("*TCombobox*Listbox.foreground", c["fg"])
-            self.option_add("*TCombobox*Listbox.selectBackground", c["accent"])
-            self.option_add("*TCombobox*Listbox.selectForeground", c["accent_fg"])
-        else:
-            self.log.configure(**self._light_text)
-            self.option_add("*TCombobox*Listbox.background", "white")
-            self.option_add("*TCombobox*Listbox.foreground", "black")
-            self.option_add("*TCombobox*Listbox.selectBackground", "#0078d7")
-            self.option_add("*TCombobox*Listbox.selectForeground", "white")
+        colors = self._text_colors(on)
+        self.configure(background=colors["root_bg"])
+        self.log.configure(background=colors["background"],
+                           foreground=colors["foreground"],
+                           insertbackground=colors["insertbackground"],
+                           selectbackground=colors["selectbackground"],
+                           selectforeground=colors["selectforeground"])
+        self.option_add("*TCombobox*Listbox.background", colors["listbox_bg"])
+        self.option_add("*TCombobox*Listbox.foreground", colors["listbox_fg"])
+        self.option_add("*TCombobox*Listbox.selectBackground",
+                        colors["listbox_select_bg"])
+        self.option_add("*TCombobox*Listbox.selectForeground",
+                        colors["listbox_select_fg"])
 
     # -- catalog --------------------------------------------------------
     def load_catalog(self):
@@ -529,17 +579,12 @@ class FlathubBrowser(tk.Tk):
                 pass
 
     def _style_text_widget(self, widget):
-        if self.theme_var.get() and self._dark_ttk_ok:
-            c = DARK_COLORS
-            widget.configure(background=c["bg_alt"], foreground=c["fg"],
-                             insertbackground=c["fg"],
-                             selectbackground=c["accent"],
-                             selectforeground=c["accent_fg"])
-        else:
-            widget.configure(background=self._light_text["background"],
-                             foreground=self._light_text["foreground"],
-                             insertbackground=self._light_text.get(
-                                 "insertbackground", "black"))
+        colors = self._text_colors(self._is_dark_mode())
+        widget.configure(background=colors["background"],
+                         foreground=colors["foreground"],
+                         insertbackground=colors["insertbackground"],
+                         selectbackground=colors["selectbackground"],
+                         selectforeground=colors["selectforeground"])
 
     def _single_dialog(self, key, title, geometry):
         dlg = self._dialogs.get(key)

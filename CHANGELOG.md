@@ -5,6 +5,20 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-09
+
+### Added
+
+- Modern Bootstrap-style light/dark themes via ttkbootstrap (pure Python,
+  declared dependency, verified working with 1.x and 2.x theme names).
+  The app still runs fully without it via the built-in theme fallback;
+  CI now runs the suite both ways.
+
+### Changed
+
+- Theme internals unified: one color source drives root background, log,
+  dialogs and combobox popups in every mode.
+
 ## [0.4.0] - 2026-10-09
 
 ### Changed

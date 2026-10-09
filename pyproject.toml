@@ -4,10 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flatpak-batch-installer"
-version = "0.4.0"
+version = "0.5.0"
 description = "Browse/search the Flathub catalog, select multiple apps, install them in one Flatpak operation."
 readme = "README.md"
 requires-python = ">=3.10"
+dependencies = ["ttkbootstrap>=1.10"]
 license = { text = "MIT" }
 authors = [{ name = "Flatpak Batch Installer contributors" }]
 keywords = ["flatpak", "flathub", "linux", "installer", "tkinter"]

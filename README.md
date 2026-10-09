@@ -6,7 +6,9 @@
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](pyproject.toml)
 
 Browse/search the Flathub catalog, select multiple apps, install them in one
-Flatpak operation. GUI first, CLI capable, **stdlib only** (Python + Tkinter).
+Flatpak operation. GUI first, CLI capable. Python + Tkinter with one
+lightweight pure-Python theme library (ttkbootstrap — declared dependency,
+graceful built-in fallback when absent).
 
 ## Install
 
@@ -26,6 +28,9 @@ instructions.
 - Python 3.10+
 - Tkinter (`sudo apt install python3-tk` on Debian/Ubuntu)
 - Flatpak with the Flathub remote configured
+- ttkbootstrap for the modern Bootstrap-style themes
+  (`pip install ttkbootstrap`; without it the app falls back to its
+  built-in light/dark themes — installed automatically via pip/pipx)
 
 ## Quick start
 
@@ -56,8 +61,9 @@ Flatpak output streams into the log area below the table.
 - **Status column** shows `Installed` (detected across user + system scopes).
 - **Select page / Clear**, live **Selected: N apps** counter.
 - **Details line** for the focused row (ID, name, status, summary).
-- **Dark mode** checkbox (stdlib `ttk.Style` only; auto-detects a system dark
-  preference, falls back to light).
+- **Dark mode** checkbox: modern Bootstrap-style light/dark themes via
+  ttkbootstrap when installed (built-in fallback otherwise);
+  auto-detects a system dark preference.
 - **Save/Load selection** (one app ID per line) for repeatable setup across
   machines.
 - **Update** button runs `flatpak [--user|--system] update --appstream

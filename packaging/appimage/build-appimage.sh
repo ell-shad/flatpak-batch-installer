@@ -81,9 +81,11 @@ done
 SITE="$APPDIR/usr/lib/python3/dist-packages"
 mkdir -p "$SITE"
 if "$PY" -m pip --version >/dev/null 2>&1; then
-  "$PY" -m pip install --no-deps --target="$SITE" "$ROOT" 2>&1 | tail -2
+  # with deps: bundles ttkbootstrap for the modern themes
+  "$PY" -m pip install --target="$SITE" "$ROOT" 2>&1 | tail -2
 else
   cp -a "$ROOT/flatpak_batch_installer" "$SITE/"
+  echo "NOTE: no pip — bundled without ttkbootstrap, built-in themes apply"
 fi
 "$PY" -c "import sys; sys.path.insert(0, '$SITE'); import flatpak_batch_installer; print('bundled', flatpak_batch_installer.__version__)"
 

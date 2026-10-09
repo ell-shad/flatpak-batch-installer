@@ -17,6 +17,46 @@ from .config import (
     LIGHT_STRIPES,
 )
 
+try:
+    import ttkbootstrap
+    BOOTSTRAP_AVAILABLE = True
+except ImportError:
+    ttkbootstrap = None
+    BOOTSTRAP_AVAILABLE = False
+
+#: ttkbootstrap theme pair (2.x family names; 1.x legacy names as fallback).
+BOOTSTRAP_THEMES = {"light": "bootstrap-light", "dark": "bootstrap-dark"}
+BOOTSTRAP_THEMES_LEGACY = {"light": "flatly", "dark": "darkly"}
+
+
+def create_style(root):
+    """Prefer a ttkbootstrap style; fall back to plain ttk.
+
+    The app works fully without ttkbootstrap installed (built-in
+    clam-based light/dark themes); with it, every ttk widget —
+    including the table — gets a modern Bootstrap-style theme.
+
+    Note: ttkbootstrap.Style is a documented process-wide singleton
+    bound to the first Tk root. The app (and the test-suite) therefore
+    uses exactly one root per process, which is the normal pattern.
+    """
+    if BOOTSTRAP_AVAILABLE:
+        return ttkbootstrap.Style()
+    import tkinter.ttk as ttk
+    return ttk.Style(root)
+
+
+def is_bootstrap(style) -> bool:
+    return BOOTSTRAP_AVAILABLE and isinstance(style, ttkbootstrap.Style)
+
+
+def bootstrap_theme_name(style, dark: bool) -> str:
+    """Theme name for the mode, tolerating ttkbootstrap 1.x and 2.x names."""
+    names = style.theme_names()
+    pair = BOOTSTRAP_THEMES if BOOTSTRAP_THEMES["light"] in names \
+        else BOOTSTRAP_THEMES_LEGACY
+    return pair["dark" if dark else "light"]
+
 
 def system_prefers_dark() -> bool:
     """Best-effort dark-mode detection. Never raises, never blocks long."""
@@ -114,4 +154,13 @@ def polish_active_theme(style, dark: bool, heading_font=None):
     return DARK_STRIPES if dark else LIGHT_STRIPES
 
 
-__all__ = ["dark_theme_settings", "polish_active_theme", "system_prefers_dark"]
+__all__ = [
+    "BOOTSTRAP_AVAILABLE",
+    "BOOTSTRAP_THEMES",
+    "bootstrap_theme_name",
+    "create_style",
+    "dark_theme_settings",
+    "is_bootstrap",
+    "polish_active_theme",
+    "system_prefers_dark",
+]

@@ -5,7 +5,9 @@ please keep it that way.
 
 ## Setup
 
-No third-party Python packages are required — stdlib only.
+One lightweight runtime dependency: ttkbootstrap (pure Python, MIT).
+`pip`/`pipx` install it automatically from `pyproject.toml`; running from a
+bare checkout without it works too (built-in theme fallback).
 
 - Python 3.10+
 - Tkinter (`sudo apt install python3-tk` on Debian/Ubuntu)
@@ -20,8 +22,10 @@ make assets                     # regenerate artwork from assets/icon-source.jpg
 
 ## Conventions
 
-1. **Stdlib only.** Do not add heavy dependencies (no GTK/Qt bindings, no web
-   frameworks). New stdlib modules are fine.
+1. **Almost no dependencies.** Runtime deps are limited to ttkbootstrap
+   (pure Python, optional at runtime with a built-in fallback). Do not add
+   heavy dependencies (no GTK/Qt bindings, no web frameworks) without
+   explicit user approval. New stdlib modules are fine.
 2. **Never block the UI thread.** Flatpak calls go in background threads and
    stream output to the log area (see `flatpak_batch_installer/installer.py`).
 3. **Prefer official Flatpak commands** over scraping flathub.org.

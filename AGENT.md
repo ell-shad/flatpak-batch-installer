@@ -3,9 +3,9 @@
 ## What this is
 
 Flatpak Batch Installer: browse/search the Flathub catalog, multi-select
-apps, batch-install via Flatpak. GUI-first (Tkinter), CLI-capable, **stdlib
-only** — never add third-party runtime dependencies without explicit user
-approval.
+apps, batch-install via Flatpak. GUI-first (Tkinter), CLI-capable. Runtime
+deps: ttkbootstrap only (pure Python, with a built-in fallback so the app
+also runs without it) — never add more without explicit user approval.
 
 ## Layout
 
@@ -22,7 +22,8 @@ flatpak_batch_installer/
   models.py         App dataclass
   helptext.py       USAGE_GUIDE + about_text() (GUI Help/About + --help-guide)
   resources.py      icon_path()/load_icon() — never raise, return None
-  theme.py          dark-mode ttk theme + system-preference detection
+  theme.py          ttkbootstrap integration (with built-in fallback),
+                    dark-mode detection, theme polish helpers
   ui.py             FlathubBrowser GUI (only module importing tkinter)
 assets/             icon-source.jpg + make_assets.py pipeline + generated PNGs
 packaging/          desktop file, metainfo, AppImage + Flatpak builds
@@ -48,6 +49,8 @@ bash packaging/appimage/build-appimage.sh  # AppImage (oldest supported base)
 2. Explicit `--user`/`--system` scope on every flatpak call (bare remote-ls
    prompts interactively when both installations exist).
 3. Helpers in `catalog.py`/`flatpak.py` stay GUI-free and headless-testable.
+   Theme code must work with AND without ttkbootstrap installed
+   (CI runs the suite both ways).
 4. GUI tests must `SkipTest` when `tk.Tk()` raises `TclError`.
 5. No destructive commands without explicit user confirmation in the UI.
 6. Update `README.md` + `CHANGELOG.md` (Unreleased) for user-facing changes.
