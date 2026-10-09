@@ -73,23 +73,14 @@ class FlathubBrowser(tk.Tk):
         self._build_shortcuts()
         self.after(100, self.poll_log)
 
-    # -- layout: two compact top rows; pager lives under the table --------
+    # -- layout: primary actions up top; secondary ones in Options ------
     def _build_widgets(self):
-        # Row 1: catalog source + install action
+        # Row 1: primary actions + two dropdowns (Options, Help)
         bar = ttk.Frame(self, padding=(8, 8, 8, 4))
         bar.pack(fill="x")
 
         ttk.Button(bar, text="Load catalog",
                    command=self.load_catalog).pack(side="left")
-
-        ttk.Button(bar, text="Update",
-                   command=self.update_metadata).pack(side="left", padx=(6, 0))
-
-        ttk.Label(bar, text="Scope:").pack(side="left", padx=(8, 4))
-        scope = ttk.Combobox(bar, textvariable=self.scope_var, width=7,
-                             state="readonly", values=["user", "system"])
-        scope.pack(side="left")
-        scope.bind("<<ComboboxSelected>>", lambda e: self.load_catalog())
 
         ttk.Label(bar, text="Status:").pack(side="left", padx=(8, 4))
         status_cb = ttk.Combobox(
@@ -102,8 +93,29 @@ class FlathubBrowser(tk.Tk):
         ttk.Button(bar, text="Install selected", style="Accent.TButton",
                    command=self.install_selected).pack(side="left", padx=(8, 0))
 
-        ttk.Checkbutton(bar, text="Dark mode", variable=self.theme_var,
-                        command=self.toggle_theme).pack(side="left", padx=(8, 0))
+        options_btn = ttk.Menubutton(bar, text="Options")
+        options_menu = tk.Menu(options_btn, tearoff=0)
+        options_menu.add_radiobutton(label="Scope: User (recommended)",
+                                     variable=self.scope_var, value="user",
+                                     command=self.load_catalog)
+        options_menu.add_radiobutton(label="Scope: System",
+                                     variable=self.scope_var, value="system",
+                                     command=self.load_catalog)
+        options_menu.add_separator()
+        options_menu.add_command(label="Update metadata…",
+                                 command=self.update_metadata)
+        options_menu.add_separator()
+        options_menu.add_command(label="Save selection…", accelerator="Ctrl+S",
+                                 command=self.save_selection_dialog)
+        options_menu.add_command(label="Load selection…", accelerator="Ctrl+O",
+                                 command=self.load_selection_dialog)
+        options_menu.add_separator()
+        options_menu.add_checkbutton(label="Dark mode",
+                                     variable=self.theme_var,
+                                     command=self.toggle_theme)
+        options_btn.configure(menu=options_menu)
+        options_btn.pack(side="left", padx=(8, 0))
+        self._options_menu = options_menu  # keep a ref like _help_menu
 
         help_btn = ttk.Menubutton(bar, text="Help")
         help_menu = tk.Menu(help_btn, tearoff=0)

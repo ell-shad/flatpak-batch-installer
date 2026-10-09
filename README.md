@@ -40,7 +40,8 @@ python3 flatpak-gui.py
 
 (`flathub-gui.py` still works but is deprecated.)
 
-1. Pick **Scope**: `user` (safe default, no root needed) or `system`.
+1. Pick install **Scope** in the **Options** menu: `user` (safe default,
+   no root needed) or `system`.
 2. Click **Load catalog**.
 3. Type in **Filter** to search name, app ID, or summary.
 4. Click the **✓ column** to check/uncheck apps (Space toggles focused rows).

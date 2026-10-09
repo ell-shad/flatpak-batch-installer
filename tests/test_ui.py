@@ -118,6 +118,27 @@ class BrowserTest(unittest.TestCase):
             self.app._help_menu.entrycget(0, "label"), "How to use…")
         self.assertEqual(
             self.app._help_menu.entrycget(1, "label"), "About…")
+
+    def test_options_menu(self):
+        menu = self.app._options_menu
+        labels = [menu.entrycget(i, "label")
+                  for i in range(menu.index("end") + 1)
+                  if menu.type(i) != "separator"]
+        joined = "\n".join(labels)
+        for keyword in ("User", "System", "Update metadata",
+                        "Save selection", "Load selection", "Dark mode"):
+            self.assertIn(keyword, joined, keyword)
+        # scope radios share the scope variable (entries 0 and 1)
+        scope_name = str(self.app.scope_var)
+        self.assertEqual(str(menu.entrycget(0, "variable")), scope_name)
+        self.assertEqual(str(menu.entrycget(1, "variable")), scope_name)
+        self.assertEqual(menu.type(0), "radiobutton")
+        self.assertEqual(menu.type(3), "command")
+        # dark-mode checkbutton rides on the theme variable
+        types = [menu.type(i) for i in range(menu.index("end") + 1)]
+        check_idx = types.index("checkbutton")
+        self.assertEqual(str(menu.entrycget(check_idx, "variable")),
+                         str(self.app.theme_var))
         # accent style for the primary action exists in both modes
         for dark in (False, True):
             self.app.theme_var.set(dark)

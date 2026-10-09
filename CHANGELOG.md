@@ -5,6 +5,13 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Toolbar decluttered: Scope, Update metadata, Save/Load selection and
+  Dark mode moved into an `Options` dropdown (Help menu stays help-only).
+  Top row now holds Load catalog, Status filter, Install and the two
+  dropdowns.
+
 ## [0.6.0] - 2026-10-09
 
 ### Added

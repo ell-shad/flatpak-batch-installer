@@ -27,18 +27,15 @@ WORKFLOW IN 5 STEPS
 
 WHAT IS WHAT
   Load catalog .... Load the Flathub app list for the chosen scope.
-  Update .......... Refresh Flatpak's AppStream metadata
-                    (`flatpak update --appstream flathub`), then reload.
-                    Use it when names/summaries show up empty.
-  Scope ........... user = install for you only (no root);
-                    system = install for all users (may need root).
   Status .......... View filter: all / installed / not-installed apps,
                     or only the ones you ticked (selected).
   Install selected  Install everything ticked, in ONE flatpak call.
                     Always asks for confirmation first.
-  Dark mode ....... Switch the light/dark theme — modern Bootstrap-style
-                    themes when ttkbootstrap is installed, built-in
-                    themes otherwise (auto-detects yours).
+  Options ......... Secondary settings: Scope user (for you only, no
+                    root) or system (all users, may need root);
+                    Update metadata (refresh AppStream data when names
+                    show up empty); Save/Load selection files;
+                    Dark mode switch.
   Help ............ This guide (How to use / About) — or press F1.
   Filter .......... Live search across app name, app ID and summary.
   Select page ..... Tick every app on the current page.
