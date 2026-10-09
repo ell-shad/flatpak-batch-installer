@@ -2,7 +2,7 @@
 
 [![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
 [![Release](../../actions/workflows/release.yml/badge.svg)](../../actions/workflows/release.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](pyproject.toml)
 
 Browse/search the Flathub catalog, select multiple apps, install them in one
@@ -16,7 +16,7 @@ graceful built-in fallback when absent).
 |---|---|---|
 | **AppImage** (recommended) | Download `Flatpak-Batch-Installer-*.AppImage` from [Releases](../../releases), `chmod +x`, run | Works on any distro; bundles Python + Tk |
 | **pipx** | `pipx install git+https://github.com/example/flatpak-batch-installer` | Needs Python 3.10+, Tk, Flatpak on host |
-| **From source** | `python3 flatpak-gui.py` | Developers; same host requirements |
+| **From source** | `pip install ttkbootstrap` then `python3 flatpak-gui.py` | Developers; same host requirements |
 | **Desktop shortcut** | `make install-user` | Adds launcher + icon, no root |
 
 See [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md) for the full comparison
@@ -121,7 +121,8 @@ See [AGENT.md](AGENT.md) for contributor/agent notes,
 | "multiple installations" prompt | Pick an explicit scope; bare `flatpak remote-ls flathub` is ambiguous when both scopes exist |
 | GUI won't start (no display) | Use CLI mode: `python3 flatpak-gui.py --list --search TEXT` |
 | Tkinter missing | Debian/Ubuntu: `sudo apt install python3-tk`; Fedora: `sudo dnf install python3-tkinter`; Arch: `sudo pacman -S tk` |
+| Old/classic look despite ttkbootstrap installed | ttkbootstrap needs Pillow *with Tk support*: Debian/Ubuntu split it out, so source runners need `sudo apt install python3-pil.imagetk`. pipx installs and the AppImage bundle full Pillow, so they are unaffected. |
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Security reports: [SECURITY.md](SECURITY.md).
+GNU GPLv3 or later — see [LICENSE](LICENSE). Security reports: [SECURITY.md](SECURITY.md).

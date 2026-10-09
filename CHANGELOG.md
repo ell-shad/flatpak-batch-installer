@@ -5,6 +5,20 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-09
+
+### Added
+
+- Keyboard shortcuts: F1 help, F5 reload catalog, Ctrl+F filter,
+  Ctrl+S / Ctrl+O save/load selection, Ctrl+Enter install,
+  Ctrl+A tick page, Space tick rows, Esc clear filter (all in Help).
+
+### Changed
+
+- License switched from MIT to GNU GPLv3 or later (sole authorship,
+  all dependencies GPL-compatible). App tells when ttkbootstrap is
+  missing and falls back to built-in themes.
+
 ## [0.5.0] - 2026-10-09
 
 ### Added

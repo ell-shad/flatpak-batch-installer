@@ -55,6 +55,16 @@ WHAT IS WHAT
                     The spinner + "Working…" (top right) only means a
                     background job is running — it is not a progress %.
 
+KEYBOARD SHORTCUTS
+  F1 ............ Open this guide.
+  F5 ............ Reload the catalog.
+  Ctrl+F ........ Jump to the Filter box.
+  Ctrl+S / Ctrl+O  Save / load the selection file.
+  Ctrl+Enter .... Install selected (asks first, as always).
+  Ctrl+A ........ Tick the whole current page (in the table).
+  Space ......... Tick/untick the focused rows (in the table).
+  Esc ........... Clear the filter (in the Filter box).
+
 TYPICAL FIXES
   Names/summaries empty ... Click Update (fetches AppStream metadata).
   "Remote not found" ...... Add Flathub, then Update:
@@ -78,7 +88,7 @@ def about_text(version: str) -> str:
         "Browse the Flathub catalog, select many apps,\n"
         "install them all with one Flatpak command.\n"
         "\n"
-        "MIT License — Flatpak Batch Installer contributors.\n"
+        "GNU GPLv3 or later — Flatpak Batch Installer contributors.\n"
         "Built with Python + Tkinter (standard library only).\n"
         "\n"
         f"{HOMEPAGE}\n"

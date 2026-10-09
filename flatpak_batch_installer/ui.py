@@ -27,6 +27,7 @@ from .installer import stream_command
 from .helptext import USAGE_GUIDE, about_text
 from .resources import load_icon
 from .theme import (
+    BOOTSTRAP_AVAILABLE,
     bootstrap_theme_name,
     create_style,
     dark_theme_settings,
@@ -69,7 +70,7 @@ class FlathubBrowser(tk.Tk):
         self._build_widgets()
         self._init_theme()
         self._set_window_icon()
-        self.bind("<F1>", lambda e: self.show_help())
+        self._build_shortcuts()
         self.after(100, self.poll_log)
 
     # -- layout: two compact top rows; pager lives under the table --------
@@ -120,6 +121,7 @@ class FlathubBrowser(tk.Tk):
         entry = ttk.Entry(filt, textvariable=self.filter_var, width=32)
         entry.pack(side="left", padx=(4, 0))
         entry.bind("<KeyRelease>", lambda e: self.schedule_filter())
+        self.filter_entry = entry
         ttk.Button(filt, text="Select page",
                    command=self.select_all_visible).pack(side="left", padx=(8, 0))
         ttk.Button(filt, text="Clear", command=self.clear_selection).pack(
@@ -233,6 +235,11 @@ class FlathubBrowser(tk.Tk):
             self._set_dark(True)
         else:
             self._apply_polish()
+        if not BOOTSTRAP_AVAILABLE:
+            self.append_log(
+                "Note: ttkbootstrap is not installed — using built-in "
+                "themes. Install it (`pip install ttkbootstrap`) for the "
+                "modern light/dark look.")
 
     def _is_dark_mode(self):
         return bool(self.theme_var.get()
@@ -525,6 +532,31 @@ class FlathubBrowser(tk.Tk):
         self.selected_ids.clear()
         self.refresh_marks()
         self.update_count()
+
+    # -- keyboard shortcuts ----------------------------------------------
+    def _build_shortcuts(self):
+        self.bind("<F1>", lambda e: self.show_help())
+        self.bind("<F5>", lambda e: self.load_catalog())
+        self.bind("<Control-f>", lambda e: self.focus_filter())
+        self.bind("<Control-s>", lambda e: self.save_selection_dialog())
+        self.bind("<Control-o>", lambda e: self.load_selection_dialog())
+        self.bind("<Control-Return>", lambda e: self.install_selected())
+        self.tree.bind("<Control-a>", self.on_select_all_key)
+        self.filter_entry.bind("<Escape>", lambda e: self.clear_filter())
+
+    def focus_filter(self):
+        self.filter_entry.focus_set()
+        self.filter_entry.select_range(0, "end")
+
+    def clear_filter(self):
+        self.filter_var.set("")
+        self.page = 0
+        self.apply_filter()
+        self.tree.focus_set()
+
+    def on_select_all_key(self, event):
+        self.select_all_visible()
+        return "break"
 
     # -- save / load -----------------------------------------------------
     def save_selection_dialog(self):

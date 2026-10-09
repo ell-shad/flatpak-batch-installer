@@ -26,7 +26,7 @@ class AboutTest(unittest.TestCase):
         text = about_text(__version__)
         self.assertIn(__version__, text)
         self.assertIn("Flatpak Batch Installer", text)
-        self.assertIn("MIT", text)
+        self.assertIn("GPL", text)
 
 
 class ResourcesTest(unittest.TestCase):

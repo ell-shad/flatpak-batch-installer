@@ -151,6 +151,26 @@ class BrowserTest(unittest.TestCase):
             self.app.style.theme_use(),
             bootstrap_theme_name(self.app.style, False))
 
+    def test_shortcuts_registered(self):
+        for seq in ("<F1>", "<F5>", "<Control-f>", "<Control-s>",
+                    "<Control-o>", "<Control-Return>"):
+            self.assertTrue(self.app.bind(seq), seq)
+        self.assertTrue(self.app.tree.bind("<Control-a>"))
+        self.assertTrue(self.app.filter_entry.bind("<Escape>"))
+
+    def test_clear_filter(self):
+        self.app.filter_var.set("gimp")
+        self.app.page = 3
+        self.app.clear_filter()
+        self.assertEqual(self.app.filter_var.get(), "")
+        self.assertEqual(self.app.page, 0)
+
+    def test_ctrl_a_selects_page(self):
+        self.app.all_rows = [App(f"id{i}", f"N{i}", "") for i in range(10)]
+        self.app.apply_filter()
+        self.assertEqual(self.app.on_select_all_key(None), "break")
+        self.assertEqual(len(self.app.selected_ids), 10)
+
     def test_help_and_about_dialogs(self):
         self.app.show_help()
         self.app.show_about()

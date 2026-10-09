@@ -5,7 +5,7 @@
 <component type="desktop-application">
   <id>io.github.flatpak-batch-installer</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>MIT</project_license>
+  <project_license>GPL-3.0-or-later</project_license>
   <name>Flatpak Batch Installer</name>
   <summary>Select many Flathub apps and install them with one command</summary>
   <description>
@@ -28,6 +28,11 @@
   </developer>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.6.0" date="2026-10-09">
+      <description>
+        <p>Keyboard shortcuts; license is now GNU GPLv3 or later.</p>
+      </description>
+    </release>
     <release version="0.5.0" date="2026-10-09">
       <description>
         <p>Modern Bootstrap-style themes with built-in fallback.</p>
