@@ -83,8 +83,8 @@ def shortcuts_text() -> str:
     return "\n".join(lines) + "\n"
 
 
-HOMEPAGE = "https://github.com/example/flatpak-batch-installer"
-ISSUES = "https://github.com/example/flatpak-batch-installer/issues"
+HOMEPAGE = "https://github.com/ell-shad/flatpak-batch-installer"
+ISSUES = "https://github.com/ell-shad/flatpak-batch-installer/issues"
 
 
 def about_text(version: str) -> str:

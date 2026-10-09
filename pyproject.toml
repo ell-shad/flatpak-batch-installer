@@ -26,8 +26,8 @@ classifiers = [
 flatpak-batch-installer = "flatpak_batch_installer.app:main"
 
 [project.urls]
-Homepage = "https://github.com/example/flatpak-batch-installer"
-Issues = "https://github.com/example/flatpak-batch-installer/issues"
+Homepage = "https://github.com/ell-shad/flatpak-batch-installer"
+Issues = "https://github.com/ell-shad/flatpak-batch-installer/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

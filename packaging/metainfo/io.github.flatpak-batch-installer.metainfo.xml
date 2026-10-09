@@ -21,8 +21,8 @@
     </p>
   </description>
   <launchable type="desktop-id">io.github.flatpak-batch-installer.desktop</launchable>
-  <url type="homepage">https://github.com/example/flatpak-batch-installer</url>
-  <url type="bugtracker">https://github.com/example/flatpak-batch-installer/issues</url>
+  <url type="homepage">https://github.com/ell-shad/flatpak-batch-installer</url>
+  <url type="bugtracker">https://github.com/ell-shad/flatpak-batch-installer/issues</url>
   <developer>
     <name>Flatpak Batch Installer contributors</name>
   </developer>

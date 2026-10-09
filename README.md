@@ -15,7 +15,7 @@ graceful built-in fallback when absent).
 | Method | Command | Notes |
 |---|---|---|
 | **AppImage** (recommended) | Download `Flatpak-Batch-Installer-*.AppImage` from [Releases](../../releases), `chmod +x`, run | Works on any distro; bundles Python + Tk |
-| **pipx** | `pipx install git+https://github.com/example/flatpak-batch-installer` | Needs Python 3.10+, Tk, Flatpak on host |
+| **pipx** | `pipx install git+https://github.com/ell-shad/flatpak-batch-installer` | Needs Python 3.10+, Tk, Flatpak on host |
 | **From source** | `pip install ttkbootstrap` then `python3 flatpak-gui.py` | Developers; same host requirements |
 | **Desktop shortcut** | `make install-user` | Adds launcher + icon, no root |
 
