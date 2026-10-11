@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-004",
+  "type": "docs",
+  "description": "Docs and test completeness: update CHANGELOG.md under [Unreleased], update README.md feature list and keyboard shortcuts table, fix any remaining test failures from FEATs 1-3, add tests/test_installer.py for stream_command timeout, and run a full smoke-test. This feature is independent of no other FEAT in terms of file edits but must run last since it documents the final state of all changes.",
+  "status": "completed",
+  "steps": [
+    "1. CHANGELOG.md — under '## [Unreleased]' add sections: ### Fixed (list all FEAT-001 bug fixes: WM_DELETE_WINDOW race, poll_log guard, save_selection dedup, NameError in theme, update_metadata cmd fix, stream_command timeout, ID validation, _filter_job init, stale dialog refs, query truncation); ### Added (list all new features: sidebar layout, app detail panel, per-app install progress, search history, category filter, install count badge, Ctrl+D shortcut, tooltips, empty states, Installed Apps tab with uninstall, Update All, Export/Import JSON, Select by category); ### Changed (mention modern GUI redesign: sidebar layout, rich rows, header toolbar, 4-segment status bar).",
+    "2. README.md — in 'Other GUI features' section, add bullet points for: Installed Apps tab (view installed, uninstall with confirmation), Update All button (updates all installed apps with streamed output), App detail panel (name, ID, version, status, summary on row focus), Search history dropdown (last 5 searches, session only), Category filter (filter by app category in sidebar), Export selection as JSON (.json and .txt both supported). In Quick start section, add mention of Ctrl+D shortcut. In 'Keyboard shortcuts' or troubleshooting, mention Ctrl+D.",
+    "3. tests/test_installer.py (new file) — import stream_command from flatpak_batch_installer.installer. Test 1: test_stream_command_timeout — use subprocess mock: patch subprocess.Popen to return a mock whose communicate raises TimeoutExpired; assert stream_command returns 124 and on_line was called with text containing 'timed out'. Test 2: test_stream_command_success — mock Popen with stdout=['line1\\n', 'line2\\n'], returncode=0; assert on_line called twice, returns 0. Test 3: test_stream_command_missing_executable — patch Popen to raise FileNotFoundError; assert returns 127 and on_line called with 'ERROR: flatpak executable not found.'",
+    "4. Run full test suite and fix any remaining failures: `python3 -m unittest discover -s tests -v`. Common post-FEAT failure patterns to look for: (a) test_modern_chrome expecting old toolbar layout — update assertion to match new header bar; (b) test_options_menu — verify menu items still exist after layout change; (c) test_shortcuts_registered — add Ctrl+D. Fix each by updating the test expectation (not weakening it — verify the feature is still present in the new location).",
+    "5. Smoke-test app launch: run `python3 -m compileall -q flatpak_batch_installer flatpak-gui.py tests` — confirm zero errors. If a display is available, run `python3 -c 'from flatpak_batch_installer.ui import FlathubBrowser; b = FlathubBrowser(); b.after(500, b.destroy); b.mainloop()'` and confirm clean exit.",
+    "6. flatpak_batch_installer/__init__.py — bump __version__ to '0.7.0' to reflect the major GUI overhaul and new features.",
+    "7. pyproject.toml — update version field to '0.7.0' to match __init__.py."
+  ],
+  "acceptance_criteria": [
+    "CHANGELOG.md [Unreleased] section lists all bug fixes and new features.",
+    "README.md 'Other GUI features' section mentions Installed tab, Update All, detail panel, search history, category filter, and JSON export.",
+    "tests/test_installer.py exists and all 3 tests pass.",
+    "python3 -m unittest discover -s tests -v — zero failures, zero errors (SkipTest OK).",
+    "python3 -m compileall -q flatpak_batch_installer flatpak-gui.py tests — zero errors.",
+    "__version__ in flatpak_batch_installer/__init__.py is '0.7.0'.",
+    "pyproject.toml version field is '0.7.0'."
+  ],
+  "verification": [
+    "python3 -m unittest discover -s tests -v",
+    "python3 -m compileall -q flatpak_batch_installer flatpak-gui.py tests",
+    "grep -n '__version__' flatpak_batch_installer/__init__.py  # should show 0.7.0"
+  ],
+  "blocked_reason": null,
+  "findings": "All 7 steps implemented and verified. 70 tests pass (3 new in tests/test_installer.py), compileall clean, __version__ = '0.7.0'.\n\n1. CHANGELOG.md [Unreleased] section populated with ### Fixed (10 bug-fix entries from FEAT-001), ### Added (14 new-feature entries from FEAT-002/003), ### Changed (3 redesign entries).\n2. README.md 'Other GUI features' section updated to document: Installed Apps tab, Update All button, App detail panel, Search history dropdown, Category filter (with Select all in category), Export/Import JSON. Quick start section updated to mention Ctrl+D and Refresh (F5).\n3. tests/test_installer.py created with 3 tests: test_stream_command_success, test_stream_command_timeout (returns 124, on_line called with 'timed out'), test_stream_command_missing_executable (returns 127, on_line called with 'not found').\n4. All 70 tests pass: python3 -m unittest discover -s tests -v — 0 failures, 0 errors.\n5. python3 -m compileall -q flatpak_batch_installer flatpak-gui.py tests — 0 errors.\n6. flatpak_batch_installer/__init__.py: __version__ = '0.7.0'.\n7. pyproject.toml: version = '0.7.0'."
+}

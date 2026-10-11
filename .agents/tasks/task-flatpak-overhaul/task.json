@@ -1,0 +1,7 @@
+{
+  "task_id": "task-flatpak-overhaul",
+  "task_description": "Full overhaul of Flatpak Batch Installer: audit and fix all bugs/security/safety issues, redesign GUI to a modern sidebar layout with app cards, add 7 new user-facing features (installed tab, detail panel, update-all, export/import JSON, search history, category filter, install count badge), update docs and tests.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

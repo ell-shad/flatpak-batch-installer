@@ -45,14 +45,15 @@ python3 flatpak-gui.py
 
 (`flathub-gui.py` still works but is deprecated.)
 
-1. Pick install **Scope** in the **Options** menu: `user` (safe default,
-   no root needed) or `system`.
-2. Click **Load catalog**.
-3. Type in **Filter** to search name, app ID, or summary.
+1. Pick install **Scope** in the **Options** menu or sidebar: `user` (safe
+   default, no root needed) or `system`.
+2. Click **Refresh** (or press **F5**) to load the catalog.
+3. Type in the **Search** box to filter by name, app ID, or summary.
+   Press **Ctrl+D** to deselect all apps at once.
 4. Click the **✓ column** to check/uncheck apps (Space toggles focused rows).
    Selection is kept when you change pages.
 5. Browse pages with **< Prev / Next >** (rows/page: 100/200/500).
-6. Click **Install selected**, review the confirmation list, confirm.
+6. Click **Install (N)**, review the confirmation list, confirm.
 7. Stuck? Press **F1** (guide) or **Ctrl+K** (shortcuts), or open the
    **Help** menu — everything is documented in-app
    (also: `python3 flatpak-gui.py --help-guide`).
@@ -64,15 +65,34 @@ Flatpak output streams into the log area below the table.
 
 ## Other GUI features
 
+- **Installed Apps tab** — view all installed Flatpak apps (user + system
+  scopes merged); select one or more and click **Uninstall Selected**
+  (confirmation required before any package is removed).
+- **Update All button** — updates every installed Flatpak app for the
+  current scope; streams live output to the log; requires confirmation.
+- **App detail panel** — a collapsible panel below the catalog list shows the
+  full name, app ID, install status badge, and a plain-text summary for
+  whichever row is focused.
+- **Search history dropdown** — the search box remembers the last 5
+  non-empty searches for the current session; click the dropdown arrow to
+  reuse a previous term.
+- **Category filter** — a "Category" sidebar combobox narrows the catalog to
+  a single app category (GNOME, KDE, Graphics, Gaming, Office, Internet, …);
+  combine with the search box for precise browsing.  Use **Select all in
+  category** to add every app in the current category to the selection.
+- **Export / Import selection as JSON** — Save/Load selection dialogs now
+  offer `.json` in addition to plain `.txt`; both formats apply the same
+  app-ID validation on load.
 - **Status** filter: `all` / `installed` / `not-installed` / `selected`.
 - **Status column** shows `Installed` (detected across user + system scopes).
-- **Select page / Clear**, live **Selected: N apps** counter.
-- **Details line** for the focused row (ID, name, status, summary).
+- **Install count badge** — the Install button label shows `Install (N)` when
+  N apps are selected; press **Ctrl+D** to deselect all.
+- **Select Page / Clear**, live **Selected: N apps** counter.
 - **Dark mode** checkbox: modern Bootstrap-style light/dark themes via
   ttkbootstrap when installed (built-in fallback otherwise);
   auto-detects a system dark preference.
-- **Save/Load selection** (one app ID per line) for repeatable setup across
-  machines.
+- **Save/Load selection** (one app ID per line, or JSON) for repeatable setup
+  across machines.
 - **Update** button runs `flatpak [--user|--system] update --appstream
   flathub`, then reloads.
 - Install confirmation dialog; duplicates removed; one batch command:
