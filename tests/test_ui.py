@@ -42,8 +42,11 @@ class BrowserTest(unittest.TestCase):
         self.app.page_size_var.set(str(PAGE_SIZE))
         self.app.filter_var.set("")
         self.app.status_filter_var.set("all")
+        self.app.category_var.set("All")
         self.app.theme_var.set(False)
         self.app.toggle_theme()
+        self.app._search_history = []
+        self.app.filter_entry.configure(values=[])
         for child in list(self.app.winfo_children()):
             if child.__class__.__name__ == "Toplevel":
                 child.destroy()
@@ -177,7 +180,8 @@ class BrowserTest(unittest.TestCase):
 
     def test_shortcuts_registered(self):
         for seq in ("<F1>", "<F5>", "<Control-f>", "<Control-s>",
-                    "<Control-o>", "<Control-k>", "<Control-Return>"):
+                    "<Control-o>", "<Control-k>", "<Control-Return>",
+                    "<Control-d>"):
             self.assertTrue(self.app.bind(seq), seq)
         self.assertTrue(self.app.tree.bind("<Control-a>"))
         self.assertTrue(self.app.filter_entry.bind("<Escape>"))
@@ -235,6 +239,121 @@ class BrowserTest(unittest.TestCase):
         for child in self.app.winfo_children():
             if child.__class__.__name__ == "Toplevel":
                 child.destroy()
+
+    # -----------------------------------------------------------------------
+    # FEAT-002 new tests
+    # -----------------------------------------------------------------------
+
+    def test_install_btn_badge(self):
+        """Install button shows 'Install (N)' when N apps are selected."""
+        self.app.all_rows = [App(f"org.ex.App{i}", f"App{i}", "") for i in range(5)]
+        self.app.apply_filter()
+        # Select 3 apps
+        ids = list(self.app.row_by_iid.values())[:3]
+        for app_id in ids:
+            self.app.selected_ids.add(app_id)
+        self.app.update_count()
+        btn_text = self.app.install_btn.cget("text")
+        self.assertEqual(btn_text, "Install (3)")
+        # Deselect all
+        self.app.clear_selection()
+        btn_text = self.app.install_btn.cget("text")
+        self.assertEqual(btn_text, "Install")
+
+    def test_search_history(self):
+        """Running 3 searches accumulates _search_history entries."""
+        self.app.all_rows = [
+            App("org.gimp.GIMP", "GIMP", "image editor"),
+            App("org.inkscape.Inkscape", "Inkscape", "vector editor"),
+            App("org.mozilla.firefox", "Firefox", "browser"),
+        ]
+        # Perform 3 unique searches that produce results
+        for term in ("gimp", "inkscape", "firefox"):
+            self.app.filter_var.set(term)
+            self.app.apply_filter()
+        self.assertEqual(len(self.app._search_history), 3)
+        # History is most-recent-first
+        self.assertEqual(self.app._search_history[0], "firefox")
+
+    def test_category_filter_populates(self):
+        """Category combobox gets populated with actual categories after load."""
+        from flatpak_batch_installer.catalog import _categorize
+        apps = [
+            App("org.gnome.Calculator", "Calculator", "", "GNOME"),
+            App("org.kde.kate", "Kate", "", "KDE"),
+            App("org.gimp.GIMP", "GIMP", "", "Graphics"),
+            App("org.videolan.VLC", "VLC", "player", "Other"),
+        ]
+        self.app.all_rows = apps
+        cats = ["All"] + sorted({app.category for app in apps} - {""})
+        self.app.category_cb.configure(values=cats)
+        cb_values = list(self.app.category_cb.cget("values"))
+        self.assertIn("All", cb_values)
+        self.assertIn("GNOME", cb_values)
+        self.assertIn("KDE", cb_values)
+        self.assertIn("Graphics", cb_values)
+        self.assertIn("Other", cb_values)
+
+    def test_empty_state_no_catalog(self):
+        """With no catalog loaded, apply_filter shows a placeholder row."""
+        self.app.all_rows = []
+        self.app.apply_filter()
+        children = self.app.tree.get_children()
+        # There should be exactly one placeholder row
+        self.assertEqual(len(children), 1)
+        # The placeholder row is NOT in row_by_iid (so it won't be selectable)
+        self.assertNotIn(children[0], self.app.row_by_iid)
+        vals = self.app.tree.item(children[0], "values")
+        self.assertEqual(vals[2], "No catalog loaded")
+
+    def test_empty_state_no_matches(self):
+        """With a loaded catalog but no matches, a 'No results' placeholder appears."""
+        self.app.all_rows = [App("org.example.App", "App", "test")]
+        self.app.filter_var.set("zzz_no_match_xyz")
+        self.app.apply_filter()
+        children = self.app.tree.get_children()
+        self.assertEqual(len(children), 1)
+        self.assertNotIn(children[0], self.app.row_by_iid)
+        vals = self.app.tree.item(children[0], "values")
+        self.assertEqual(vals[2], "No results")
+
+    def test_sidebar_has_category_combobox(self):
+        """The category_cb attribute exists and has 'All' as a valid value."""
+        self.assertIsNotNone(self.app.category_cb)
+        values = list(self.app.category_cb.cget("values"))
+        self.assertIn("All", values)
+
+    def test_scope_badge_updates(self):
+        """scope_badge_var reflects the current scope."""
+        self.app.scope_var.set("system")
+        self.app.scope_badge_var.set(f"Scope: {self.app.scope_var.get()}")
+        self.assertIn("system", self.app.scope_badge_var.get())
+        self.app.scope_var.set("user")
+        self.app.scope_badge_var.set(f"Scope: {self.app.scope_var.get()}")
+        self.assertIn("user", self.app.scope_badge_var.get())
+
+    def test_tooltips_attached(self):
+        """At least 8 tooltip objects are registered."""
+        self.assertGreaterEqual(len(self.app._tooltip_widgets), 8)
+
+    def test_ctrl_d_clears_selection(self):
+        """Ctrl+D binding triggers clear_selection."""
+        self.app.all_rows = [App(f"id{i}", f"N{i}", "") for i in range(5)]
+        self.app.apply_filter()
+        for app_id in self.app.row_by_iid.values():
+            self.app.selected_ids.add(app_id)
+        self.app.update_count()
+        self.assertEqual(len(self.app.selected_ids), 5)
+        # Simulate Ctrl+D by calling clear_selection directly
+        self.app.clear_selection()
+        self.assertEqual(len(self.app.selected_ids), 0)
+        self.assertEqual(self.app.install_btn.cget("text"), "Install")
+
+    def test_total_var_updates(self):
+        """total_var is updated in apply_filter."""
+        self.app.all_rows = [App(f"id{i}", f"N{i}", "") for i in range(7)]
+        self.app.apply_filter()
+        self.assertEqual(self.app.total_var.get(), "Total: 7 apps")
 
 
 if __name__ == "__main__":

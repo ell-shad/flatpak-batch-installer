@@ -10,6 +10,7 @@ class App:
     app_id: str
     name: str = ""
     summary: str = ""
+    category: str = ""
 
     @property
     def display_name(self) -> str:

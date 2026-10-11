@@ -9,6 +9,28 @@ from .models import App
 # allows alphanumeric, dot, underscore, or hyphen characters.
 _APP_ID_RE = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]*$')
 
+#: Map of app-ID prefixes to human-readable category names.
+CATEGORY_MAP: dict[str, str] = {
+    "org.gnome.": "GNOME",
+    "org.kde.": "KDE",
+    "com.valvesoftware.": "Gaming",
+    "org.libreoffice.": "Office",
+    "org.mozilla.": "Internet",
+    "com.google.": "Internet",
+    "org.gimp.": "Graphics",
+    "org.inkscape.": "Graphics",
+    "org.audacityteam.": "Audio",
+    "net.lutris.": "Gaming",
+}
+
+
+def _categorize(app_id: str) -> str:
+    """Return a category name for an app ID, or 'Other'."""
+    for prefix, category in CATEGORY_MAP.items():
+        if app_id.startswith(prefix):
+            return category
+    return "Other"
+
 
 def parse_remote_ls(output: str) -> list[App]:
     """Parse ``flatpak remote-ls --columns=application,name,description``."""
@@ -23,7 +45,8 @@ def parse_remote_ls(output: str) -> list[App]:
         name = parts[1].strip() if len(parts) > 1 else ""
         summary = parts[2].strip() if len(parts) > 2 else ""
         if app_id:
-            rows.append(App(app_id=app_id, name=name, summary=summary))
+            rows.append(App(app_id=app_id, name=name, summary=summary,
+                            category=_categorize(app_id)))
     return rows
 
 
@@ -33,11 +56,13 @@ def filter_rows(
     installed: set[str] | None = None,
     status_filter: str = "all",
     selected: set[str] | None = None,
+    category: str | None = None,
 ) -> list[App]:
     """Filter catalog rows.
 
     ``status_filter`` is one of ``all`` | ``installed`` | ``not-installed``
     | ``selected``. ``installed``/``selected`` are sets of app IDs.
+    ``category`` when set to a non-None string filters to that category only.
     """
     query = (query or "")[:200]
     out = []
@@ -50,6 +75,8 @@ def filter_rows(
             continue
         if status_filter == "selected" and (
                 selected is None or app.app_id not in selected):
+            continue
+        if category is not None and app.category != category:
             continue
         if not app.matches(query):
             continue
@@ -118,6 +145,7 @@ def load_selection(path: str) -> tuple[list[str], int]:
 
 
 __all__ = [
+    "CATEGORY_MAP",
     "filter_rows",
     "load_selection",
     "paginate",

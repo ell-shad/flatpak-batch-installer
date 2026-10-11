@@ -70,6 +70,7 @@ SHORTCUTS = [
     ("Ctrl+K", "Open this cheat sheet"),
     ("Ctrl+Enter", "Install selected (asks first, as always)"),
     ("Ctrl+A", "Tick the whole current page (in the table)"),
+    ("Ctrl+D", "Deselect all apps"),
     ("Space", "Tick / untick the focused rows (in the table)"),
     ("Esc", "Clear the filter (in the Filter box)"),
 ]

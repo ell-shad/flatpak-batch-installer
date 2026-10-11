@@ -26,17 +26,17 @@ class ParseTest(unittest.TestCase):
             "org.videolan.VLC\tVLC\tPlayer\n"
         )
         self.assertEqual(rows, [
-            App("org.gimp.GIMP", "GIMP", "Image editor"),
-            App("org.videolan.VLC", "VLC", "Player"),
+            App("org.gimp.GIMP", "GIMP", "Image editor", "Graphics"),
+            App("org.videolan.VLC", "VLC", "Player", "Other"),
         ])
 
     def test_skips_blank_and_malformed(self):
         rows = parse_remote_ls("\nbadline-without-tabs\norg.a.B\tB\tS\n")
-        self.assertEqual(rows, [App("org.a.B", "B", "S")])
+        self.assertEqual(rows, [App("org.a.B", "B", "S", "Other")])
 
     def test_missing_summary(self):
         self.assertEqual(parse_remote_ls("org.a.B\tB"),
-                         [App("org.a.B", "B", "")])
+                         [App("org.a.B", "B", "", "Other")])
 
 
 class FilterTest(unittest.TestCase):
