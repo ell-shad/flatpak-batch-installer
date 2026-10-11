@@ -5,6 +5,8 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-11
+
 ### Fixed
 
 - **WM\_DELETE\_WINDOW race** — closing the window during a background
