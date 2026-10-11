@@ -19,9 +19,12 @@ from .config import (
 )
 from .flatpak import (
     build_install_cmd,
+    build_uninstall_cmd,
     get_installed_union,
+    get_installed_details,
     load_catalog,
     run_flatpak,
+    run_update_all,
     scope_args,
 )
 from .installer import stream_command
@@ -127,6 +130,11 @@ class FlathubBrowser(tk.Tk):
         self._filter_job = None
         self._search_history: list[str] = []
         self._tooltip_widgets: list[_ToolTip] = []
+        # Installed tab state
+        self.installed_rows: list[dict] = []
+        self.installed_tab_selected: set[str] = set()
+        self._installed_tab_loaded: bool = False
+        self._installed_row_by_iid: dict[str, str] = {}  # iid -> app_id
 
         self._build_widgets()
         self._init_theme()
@@ -198,7 +206,7 @@ class FlathubBrowser(tk.Tk):
         refresh_btn.pack(side="right", padx=(4, 0))
 
         update_btn = ttk.Button(header, text="Update All",
-                                command=self.update_metadata)
+                                command=self._update_all)
         update_btn.pack(side="right", padx=(4, 0))
 
         self.install_btn = ttk.Button(header, text="Install",
@@ -210,7 +218,7 @@ class FlathubBrowser(tk.Tk):
         self._add_tooltip(self.install_btn,
                           "Install the selected apps (Ctrl+Enter)")
         self._add_tooltip(update_btn,
-                          "Fetch latest AppStream metadata from Flathub")
+                          "Update all installed Flatpak apps (streams output)")
         self._add_tooltip(refresh_btn,
                           "Reload the Flathub catalog (F5)")
         self._add_tooltip(options_btn,
@@ -218,8 +226,17 @@ class FlathubBrowser(tk.Tk):
         self._add_tooltip(help_btn,
                           "Usage guide, keyboard shortcuts, about")
 
+        # ── Notebook: Browse Catalog / Installed Apps ───────────────────────
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill="both", expand=True, padx=0, pady=0)
+        self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
+
+        # ── Tab 1: Browse Catalog ───────────────────────────────────────────
+        browse_tab = ttk.Frame(self.notebook)
+        self.notebook.add(browse_tab, text="Browse Catalog")
+
         # ── Horizontal split: sidebar + content ────────────────────────────
-        paned = ttk.PanedWindow(self, orient="horizontal")
+        paned = ttk.PanedWindow(browse_tab, orient="horizontal")
         paned.pack(fill="both", expand=True, padx=0, pady=0)
 
         # ── Left sidebar ────────────────────────────────────────────────────
@@ -301,6 +318,12 @@ class FlathubBrowser(tk.Tk):
         clear_sel_btn.pack(fill="x", pady=(4, 0))
         self._add_tooltip(clear_sel_btn,
                           "Deselect all apps (Ctrl+D)")
+
+        select_cat_btn = ttk.Button(sidebar, text="Select All in Category",
+                                    command=self._select_by_category)
+        select_cat_btn.pack(fill="x", pady=(4, 0))
+        self._add_tooltip(select_cat_btn,
+                          "Select all apps in the current category")
 
         # Keep sidebar references for theme recoloring
         self._sidebar_frame = sidebar
@@ -444,6 +467,11 @@ class FlathubBrowser(tk.Tk):
         ttk.Label(statusbar, textvariable=self.status, anchor="w",
                   wraplength=700).pack(side="left", fill="x", expand=True)
 
+        # ── Tab 2: Installed Apps ───────────────────────────────────────────
+        installed_tab = ttk.Frame(self.notebook)
+        self.notebook.add(installed_tab, text="Installed Apps")
+        self._build_installed_tab(installed_tab)
+
     # -- add tooltip helper -------------------------------------------------
     def _add_tooltip(self, widget, text: str):
         self._tooltip_widgets.append(_ToolTip(widget, text))
@@ -458,6 +486,266 @@ class FlathubBrowser(tk.Tk):
             self.log.pack(fill="x", padx=(4, 0), pady=(0, 4))
             self._log_toggle_btn.configure(text="Hide")
             self._log_visible = True
+
+    # -- Installed Apps tab ------------------------------------------------
+    def _build_installed_tab(self, parent: ttk.Frame):
+        """Build all widgets inside the Installed Apps tab."""
+        # Toolbar row
+        toolbar = ttk.Frame(parent, padding=(4, 4, 4, 2))
+        toolbar.pack(fill="x")
+
+        refresh_inst_btn = ttk.Button(toolbar, text="Refresh Installed",
+                                      command=self._load_installed_tab)
+        refresh_inst_btn.pack(side="left", padx=(0, 4))
+        self._add_tooltip(refresh_inst_btn, "Reload the list of installed apps")
+
+        uninstall_btn = ttk.Button(toolbar, text="Uninstall Selected",
+                                   style="Danger.TButton",
+                                   command=self._uninstall_selected)
+        uninstall_btn.pack(side="left", padx=(0, 8))
+        self._add_tooltip(uninstall_btn,
+                          "Uninstall the checked apps (asks for confirmation)")
+
+        # Scope radios (shared self.scope_var)
+        ttk.Radiobutton(toolbar, text="User", variable=self.scope_var,
+                        value="user",
+                        command=self._on_scope_change).pack(side="left")
+        ttk.Radiobutton(toolbar, text="System", variable=self.scope_var,
+                        value="system",
+                        command=self._on_scope_change).pack(side="left",
+                                                             padx=(4, 0))
+
+        self._installed_count_var = tk.StringVar(value="Selected: 0")
+        ttk.Label(toolbar, textvariable=self._installed_count_var).pack(
+            side="left", padx=(12, 0))
+
+        # Treeview
+        columns = ("sel", "app_id", "name", "version", "origin")
+        self._installed_tree = ttk.Treeview(parent, columns=columns,
+                                             show="headings",
+                                             selectmode="extended")
+        self._installed_tree.heading("sel", text="✓")
+        self._installed_tree.heading("app_id", text="App ID")
+        self._installed_tree.heading("name", text="Name")
+        self._installed_tree.heading("version", text="Version")
+        self._installed_tree.heading("origin", text="Origin")
+        self._installed_tree.column("sel", width=36, anchor="center",
+                                     stretch=False)
+        self._installed_tree.column("app_id", width=280, anchor="w")
+        self._installed_tree.column("name", width=200, anchor="w")
+        self._installed_tree.column("version", width=100, anchor="w")
+        self._installed_tree.column("origin", width=120, anchor="w")
+        inst_scroll = ttk.Scrollbar(parent,
+                                    command=self._installed_tree.yview)
+        self._installed_tree.configure(
+            yscrollcommand=inst_scroll.set)
+        self._installed_tree.pack(fill="both", expand=True,
+                                   side="left", padx=(4, 0), pady=(0, 4))
+        inst_scroll.pack(fill="y", side="right", pady=(0, 4))
+
+        self._installed_tree.tag_configure("even", background="")
+        self._installed_tree.tag_configure("odd", background="")
+        self._installed_tree.bind("<Button-1>", self._on_installed_click)
+
+        # Footer label
+        self._installed_status_var = tk.StringVar(
+            value="Switch to this tab to load installed apps.")
+        ttk.Label(parent, textvariable=self._installed_status_var,
+                  anchor="w").pack(fill="x", side="bottom",
+                                    padx=4, pady=(0, 2))
+
+    def _on_tab_changed(self, event=None):
+        """Lazy-load the Installed Apps tab on first switch."""
+        try:
+            idx = self.notebook.index(self.notebook.select())
+        except tk.TclError:
+            return
+        if idx == 1 and not self._installed_tab_loaded:
+            self._load_installed_tab()
+
+    def _load_installed_tab(self):
+        """Load installed apps from both scopes in a background thread."""
+        if self.busy:
+            return
+        self.set_busy(True)
+        self._installed_status_var.set("Loading installed apps…")
+
+        def worker():
+            all_rows: list[dict] = []
+            for s in ("user", "system"):
+                rows, err = get_installed_details(s)
+                if err:
+                    self.log_queue.put(
+                        f"Note: could not list {s} installed apps: {err}")
+                else:
+                    # Tag each row with the scope it came from
+                    for r in rows:
+                        r = dict(r)
+                        r["scope"] = s
+                        all_rows.append(r)
+            self.installed_rows = all_rows
+
+            def finish():
+                if not self._alive:
+                    return
+                self.set_busy(False)
+                self._installed_tab_loaded = True
+                self._installed_row_by_iid.clear()
+                self.installed_tab_selected.clear()
+                for child in self._installed_tree.get_children():
+                    self._installed_tree.delete(child)
+                for index, row in enumerate(all_rows):
+                    iid = self._installed_tree.insert(
+                        "", "end",
+                        values=(
+                            UNCHECKED,
+                            row.get("app_id", ""),
+                            row.get("name", ""),
+                            row.get("version", ""),
+                            row.get("origin", ""),
+                        ),
+                        tags=("even" if index % 2 == 0 else "odd",),
+                    )
+                    self._installed_row_by_iid[iid] = row.get("app_id", "")
+                self._installed_status_var.set(
+                    f"Showing {len(all_rows)} installed app(s).")
+                self._update_installed_count()
+                # Keep the browse-tab installed set in sync
+                self.installed = {r["app_id"] for r in all_rows
+                                  if r.get("app_id")}
+                self.apply_filter()
+
+            if not self._alive:
+                return
+            self.after(0, finish)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_installed_click(self, event):
+        """Toggle checkbox column click in the installed Treeview."""
+        row = self._installed_tree.identify_row(event.y)
+        col = self._installed_tree.identify_column(event.x)
+        if not row or row not in self._installed_row_by_iid:
+            return
+        if col == "#1":
+            app_id = self._installed_row_by_iid[row]
+            if app_id in self.installed_tab_selected:
+                self.installed_tab_selected.discard(app_id)
+            else:
+                self.installed_tab_selected.add(app_id)
+            # Update checkbox value
+            vals = list(self._installed_tree.item(row, "values"))
+            vals[0] = (CHECKED if app_id in self.installed_tab_selected
+                       else UNCHECKED)
+            self._installed_tree.item(row, values=tuple(vals))
+            self._update_installed_count()
+            return "break"
+
+    def _update_installed_count(self):
+        n = len(self.installed_tab_selected)
+        self._installed_count_var.set(f"Selected: {n}")
+
+    def _uninstall_selected(self):
+        """Uninstall the apps checked in the Installed tab."""
+        if self.busy:
+            messagebox.showinfo("Please wait", "Another operation is running.")
+            return
+        ids = sorted(self.installed_tab_selected)
+        if not ids:
+            messagebox.showinfo("Nothing selected",
+                                "Check at least one app in the list.")
+            return
+        scope = self.scope_var.get()
+        preview = "\n".join(ids)
+        if not messagebox.askyesno(
+                "Confirm uninstall",
+                f"Uninstall {len(ids)} app(s) with scope '{scope}'?\n\n"
+                f"{preview[:2000]}"
+                + ("\n..." if len(preview) > 2000 else "")):
+            return
+        cmd = build_uninstall_cmd(scope, ids)
+        self.set_busy(True)
+        self.status.set(f"Uninstalling {len(ids)} app(s)…")
+        self.log_queue.put("Running: " + " ".join(cmd))
+
+        def worker():
+            from .installer import stream_command
+            exit_code = stream_command(cmd, self.log_queue.put, timeout=300)
+            self.log_queue.put(f"Uninstall finished with exit code {exit_code}")
+
+            def finish():
+                if not self._alive:
+                    return
+                self.set_busy(False)
+                self.installed_tab_selected.clear()
+                self._installed_tab_loaded = False  # force reload
+                self._load_installed_tab()
+                if exit_code == 0:
+                    self.status.set(
+                        f"Uninstalled {len(ids)} app(s) successfully.")
+                else:
+                    self.status.set("Uninstall command failed. See log.")
+
+            if not self._alive:
+                return
+            self.after(0, finish)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _update_all(self):
+        """Update all installed Flatpak apps (streaming)."""
+        if self.busy:
+            messagebox.showinfo("Please wait", "Another operation is running.")
+            return
+        scope = self.scope_var.get()
+        if not messagebox.askyesno(
+                "Confirm update",
+                f"Update all installed Flatpak apps for scope '{scope}'?\n"
+                "This may take several minutes."):
+            return
+        self.set_busy(True)
+        self.status.set(f"Updating all installed apps (scope: {scope})…")
+        self.log_queue.put(
+            f"Running: flatpak --{scope} update --noninteractive --assumeyes")
+
+        def worker():
+            exit_code = run_update_all(scope, self.log_queue.put)
+            self.log_queue.put(f"Update finished with exit code {exit_code}")
+            # Refresh installed set
+            installed, _ = get_installed_union()
+
+            def finish():
+                if not self._alive:
+                    return
+                self.set_busy(False)
+                self.installed = installed
+                self._installed_tab_loaded = False
+                self._load_installed_tab()
+                if exit_code == 0:
+                    self.status.set("All apps updated successfully.")
+                else:
+                    self.status.set("Update command failed. See log.")
+
+            if not self._alive:
+                return
+            self.after(0, finish)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    # -- select by category -------------------------------------------------
+    def _select_by_category(self):
+        """Add all apps in the current category to selected_ids."""
+        cat = self.category_var.get()
+        if cat == "All":
+            messagebox.showinfo("Select by category",
+                                "Choose a specific category first.")
+            return
+        matches = filter_rows(self.all_rows, "", self.installed, "all",
+                              category=cat)
+        for app in matches:
+            self.selected_ids.add(app.app_id)
+        self.refresh_marks()
+        self.update_count()
 
     # -- window close -------------------------------------------------------
     def _on_close(self):
@@ -592,6 +880,14 @@ class FlathubBrowser(tk.Tk):
                                                   background=stripes[0])
                 self._shortcut_tree.tag_configure("odd",
                                                   background=stripes[1])
+            # Also stripe the installed apps tree
+            try:
+                self._installed_tree.tag_configure("even",
+                                                   background=stripes[0])
+                self._installed_tree.tag_configure("odd",
+                                                   background=stripes[1])
+            except (AttributeError, tk.TclError):
+                pass
         except tk.TclError:
             pass
         self._recolor_sidebar(dark)
@@ -967,7 +1263,8 @@ class FlathubBrowser(tk.Tk):
             title="Save selected app IDs",
             initialfile="selected-apps.txt",
             defaultextension=".txt",
-            filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+            filetypes=[("JSON files", "*.json"), ("Text files", "*.txt"),
+                       ("All files", "*.*")])
         if not path:
             return
         try:
@@ -980,7 +1277,8 @@ class FlathubBrowser(tk.Tk):
     def load_selection_dialog(self):
         path = filedialog.askopenfilename(
             title="Load app ID list",
-            filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+            filetypes=[("JSON files", "*.json"), ("Text files", "*.txt"),
+                       ("All files", "*.*")])
         if not path:
             return
         try:

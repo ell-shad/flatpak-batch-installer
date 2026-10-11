@@ -158,13 +158,87 @@ def build_install_cmd(scope: str, remote: str, app_ids: list) -> list:
     ]
 
 
+def get_installed_details(
+    scope: str, timeout: int = 60,
+) -> tuple[list[dict], str | None]:
+    """Return detailed installed-app rows for one scope.
+
+    Calls ``flatpak list --app --columns=application,name,version,origin``
+    and parses the tab-separated output into a list of dicts with keys
+    ``app_id``, ``name``, ``version``, ``origin``.
+
+    Returns ``(rows, None)`` on success and ``([], error_str)`` on failure.
+    """
+    try:
+        sargs = scope_args(scope)
+    except ValueError as exc:
+        return [], str(exc)
+    result = run_flatpak(
+        [*sargs, "list", "--app",
+         "--columns=application,name,version,origin"],
+        timeout=timeout,
+    )
+    if result.returncode != 0:
+        return [], (result.stderr.strip() or "flatpak list failed.")
+    rows: list[dict] = []
+    for line in result.stdout.splitlines():
+        if not line.strip():
+            continue
+        parts = line.split("\t", 3)
+        rows.append({
+            "app_id": parts[0].strip() if len(parts) > 0 else "",
+            "name":   parts[1].strip() if len(parts) > 1 else "",
+            "version": parts[2].strip() if len(parts) > 2 else "",
+            "origin":  parts[3].strip() if len(parts) > 3 else "",
+        })
+    return rows, None
+
+
+def build_uninstall_cmd(scope: str, app_ids: list[str]) -> list[str]:
+    """Build a batch ``flatpak uninstall`` command.
+
+    Duplicates are removed (order kept); empty IDs are dropped.
+    """
+    seen: set[str] = set()
+    unique: list[str] = []
+    for app_id in app_ids:
+        if app_id and app_id not in seen:
+            seen.add(app_id)
+            unique.append(app_id)
+    return [
+        "flatpak", *scope_args(scope), "uninstall",
+        "--assumeyes", "--noninteractive", *unique,
+    ]
+
+
+def run_update_all(scope: str, on_line, timeout: int = 600) -> int:
+    """Run ``flatpak update --noninteractive --assumeyes`` for *scope*.
+
+    Streams output to ``on_line`` and returns the exit code.
+    """
+    from .installer import stream_command  # avoid circular at module level
+    try:
+        sargs = scope_args(scope)
+    except ValueError as exc:
+        on_line(f"ERROR: {exc}")
+        return 1
+    return stream_command(
+        ["flatpak", *sargs, "update", "--noninteractive", "--assumeyes"],
+        on_line,
+        timeout=timeout,
+    )
+
+
 __all__ = [
     "App",
     "build_install_cmd",
+    "build_uninstall_cmd",
     "diagnose_catalog_error",
     "get_installed",
+    "get_installed_details",
     "get_installed_union",
     "load_catalog",
     "run_flatpak",
+    "run_update_all",
     "scope_args",
 ]

@@ -124,6 +124,34 @@ class SelectionFileTest(unittest.TestCase):
             self.assertEqual(result, ["org.valid.App", "another.valid.ID"])
             self.assertEqual(skipped, 2)
 
+    def test_save_load_json_round_trip(self):
+        """Saving to .json and loading it back returns identical IDs."""
+        import json as _json
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "sel.json")
+            ids_in = ["org.a.B", "org.c.D"]
+            save_selection(ids_in, path)
+            # Confirm the file is valid JSON
+            with open(path, encoding="utf-8") as fh:
+                data = _json.loads(fh.read())
+            self.assertIsInstance(data, list)
+            ids_out, skipped = load_selection(path)
+            self.assertEqual(ids_out, ids_in)
+            self.assertEqual(skipped, 0)
+
+    def test_load_json_drops_invalid(self):
+        """JSON entries that fail ID validation are dropped."""
+        import json as _json
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "sel.json")
+            with open(path, "w", encoding="utf-8") as fh:
+                _json.dump(["org.a.B", "--bad", ""], fh)
+            ids, skipped = load_selection(path)
+            self.assertEqual(ids, ["org.a.B"])
+            self.assertGreater(skipped, 0)
+            self.assertNotIn("--bad", ids)
+            self.assertNotIn("", ids)
+
 
 if __name__ == "__main__":
     unittest.main()

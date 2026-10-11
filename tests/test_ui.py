@@ -355,6 +355,59 @@ class BrowserTest(unittest.TestCase):
         self.app.apply_filter()
         self.assertEqual(self.app.total_var.get(), "Total: 7 apps")
 
+    # -----------------------------------------------------------------------
+    # FEAT-003 new tests
+    # -----------------------------------------------------------------------
+
+    def test_installed_tab_exists(self):
+        """The Notebook has an 'Installed Apps' tab."""
+        tab_texts = [self.app.notebook.tab(i, "text")
+                     for i in range(self.app.notebook.index("end"))]
+        self.assertIn("Installed Apps", tab_texts)
+
+    def test_update_all_button_present(self):
+        """The header toolbar contains an 'Update All' button."""
+        found = False
+        for child in self.app.winfo_children():
+            cls = child.__class__.__name__
+            # Walk the header frame's children
+            if cls in ("Frame", "TFrame"):
+                for btn in child.winfo_children():
+                    try:
+                        txt = btn.cget("text")
+                        if "Update All" in str(txt):
+                            found = True
+                    except tk.TclError:
+                        pass
+        self.assertTrue(found, "No 'Update All' button found in header")
+
+    def test_select_by_category(self):
+        """_select_by_category adds only apps of the chosen category."""
+        from flatpak_batch_installer.models import App as _App
+        gnome_apps = [_App(f"org.gnome.App{i}", f"GApp{i}", "", "GNOME")
+                      for i in range(3)]
+        kde_apps = [_App(f"org.kde.App{i}", f"KApp{i}", "", "KDE")
+                    for i in range(3)]
+        self.app.all_rows = gnome_apps + kde_apps
+        self.app.selected_ids.clear()
+        self.app.category_var.set("GNOME")
+        self.app._select_by_category()
+        self.assertEqual(len(self.app.selected_ids), 3)
+        for app in gnome_apps:
+            self.assertIn(app.app_id, self.app.selected_ids)
+        for app in kde_apps:
+            self.assertNotIn(app.app_id, self.app.selected_ids)
+
+    def test_select_by_category_all_shows_info(self):
+        """_select_by_category with 'All' shows an info dialog (no change)."""
+        self.app.category_var.set("All")
+        before = set(self.app.selected_ids)
+        # messagebox.showinfo would normally block; patch it out
+        import unittest.mock as _mock
+        with _mock.patch("flatpak_batch_installer.ui.messagebox.showinfo"):
+            self.app._select_by_category()
+        self.assertEqual(self.app.selected_ids, before)
+
 
 if __name__ == "__main__":
     unittest.main()

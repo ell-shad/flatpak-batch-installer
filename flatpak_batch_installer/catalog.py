@@ -1,5 +1,6 @@
 """Catalog parsing, filtering, pagination and selection persistence."""
 
+import json
 import math
 import re
 
@@ -104,22 +105,39 @@ def paginate(
 
 
 def save_selection(app_ids: list[str], path: str) -> None:
-    """Save app IDs to a plain-text file, one per line.
+    """Save app IDs to a file, one per line (plain text) or as JSON.
+
+    If *path* ends with ``.json``, writes a JSON array.  Otherwise writes
+    plain text (one ID per line).
 
     Blank/whitespace-only entries and duplicates are silently skipped.
     Order of first occurrence is preserved.
     """
     seen: set[str] = set()
-    with open(path, "w", encoding="utf-8") as fh:
-        for app_id in app_ids:
-            stripped = app_id.strip()
-            if stripped and stripped not in seen:
-                seen.add(stripped)
-                fh.write(stripped + "\n")
+    unique: list[str] = []
+    for app_id in app_ids:
+        stripped = app_id.strip()
+        if stripped and stripped not in seen:
+            seen.add(stripped)
+            unique.append(stripped)
+
+    if path.lower().endswith(".json"):
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(unique, indent=2))
+            fh.write("\n")
+    else:
+        with open(path, "w", encoding="utf-8") as fh:
+            for app_id in unique:
+                fh.write(app_id + "\n")
 
 
 def load_selection(path: str) -> tuple[list[str], int]:
-    """Load app IDs from a file. Blank lines and ``#`` comments ignored.
+    """Load app IDs from a file (plain text or JSON).
+
+    For JSON files (*path* ends with ``.json``) the file must contain a
+    JSON array of strings; each entry is validated as a Flatpak app ID.
+
+    For plain-text files blank lines and ``#`` comments are ignored.
 
     Duplicates are removed, order is kept.  Entries that do not look like
     valid Flatpak app IDs are silently dropped (e.g. shell-injection
@@ -128,13 +146,25 @@ def load_selection(path: str) -> tuple[list[str], int]:
     Returns a ``(ids, skipped_count)`` tuple where ``skipped_count`` is
     the number of lines that were dropped due to invalid app-ID format.
     """
-    with open(path, "r", encoding="utf-8") as fh:
-        raw = [ln.strip() for ln in fh
-               if ln.strip() and not ln.startswith("#")]
+    if path.lower().endswith(".json"):
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.loads(fh.read())
+        if not isinstance(data, list):
+            raise ValueError("JSON selection file must contain a JSON array.")
+        raw = [item for item in data if isinstance(item, str) and item]
+    else:
+        with open(path, "r", encoding="utf-8") as fh:
+            raw = [ln.strip() for ln in fh
+                   if ln.strip() and not ln.startswith("#")]
+
     seen: set[str] = set()
     unique: list[str] = []
     skipped = 0
     for app_id in raw:
+        app_id = app_id.strip()
+        if not app_id:
+            skipped += 1
+            continue
         if not _APP_ID_RE.match(app_id):
             skipped += 1
             continue
