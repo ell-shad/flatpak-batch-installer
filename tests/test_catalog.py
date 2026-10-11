@@ -92,15 +92,37 @@ class SelectionFileTest(unittest.TestCase):
             path = os.path.join(tmp, "sel.txt")
             save_selection(["b", "a", "a", "  "], path)
             with open(path, encoding="utf-8") as fh:
-                self.assertEqual(fh.read(), "b\na\na\n")
-            self.assertEqual(load_selection(path), ["b", "a"])
+                self.assertEqual(fh.read(), "b\na\n")
+            ids, skipped = load_selection(path)
+            self.assertEqual(ids, ["b", "a"])
+            self.assertEqual(skipped, 0)
 
     def test_comments_ignored(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "sel.txt")
             with open(path, "w", encoding="utf-8") as fh:
                 fh.write("# comment\norg.a.B\n\norg.c.D\n")
-            self.assertEqual(load_selection(path), ["org.a.B", "org.c.D"])
+            ids, skipped = load_selection(path)
+            self.assertEqual(ids, ["org.a.B", "org.c.D"])
+            self.assertEqual(skipped, 0)
+
+    def test_load_drops_malformed_ids(self):
+        """Entries that look like shell-injection or flags are dropped."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "sel.txt")
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(
+                    "--assumeyes\n"
+                    "; rm -rf ~\n"
+                    "\n"
+                    "org.valid.App\n"
+                    "another.valid.ID\n"
+                )
+            result, skipped = load_selection(path)
+            self.assertNotIn("--assumeyes", result)
+            self.assertNotIn("; rm -rf ~", result)
+            self.assertEqual(result, ["org.valid.App", "another.valid.ID"])
+            self.assertEqual(skipped, 2)
 
 
 if __name__ == "__main__":

@@ -145,8 +145,8 @@ def polish_active_theme(style, dark: bool, heading_font=None):
     style.configure("Treeview", rowheight=26)
     if heading_font is not None:
         style.configure("Treeview.Heading", font=heading_font)
+    c = DARK_COLORS
     if dark:
-        c = DARK_COLORS
         accent, active = c["accent"], c["bg_hover"]
     else:
         accent, active = LIGHT_ACCENT, LIGHT_ACCENT_ACTIVE

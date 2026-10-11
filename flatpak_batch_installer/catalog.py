@@ -1,11 +1,16 @@
 """Catalog parsing, filtering, pagination and selection persistence."""
 
 import math
+import re
 
 from .models import App
 
+# Valid Flatpak app-ID pattern: starts with an alphanumeric character, then
+# allows alphanumeric, dot, underscore, or hyphen characters.
+_APP_ID_RE = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]*$')
 
-def parse_remote_ls(output: str) -> list:
+
+def parse_remote_ls(output: str) -> list[App]:
     """Parse ``flatpak remote-ls --columns=application,name,description``."""
     rows = []
     for line in output.splitlines():
@@ -22,13 +27,19 @@ def parse_remote_ls(output: str) -> list:
     return rows
 
 
-def filter_rows(rows: list, query: str, installed=None,
-                status_filter: str = "all", selected=None) -> list:
+def filter_rows(
+    rows: list[App],
+    query: str,
+    installed: set[str] | None = None,
+    status_filter: str = "all",
+    selected: set[str] | None = None,
+) -> list[App]:
     """Filter catalog rows.
 
     ``status_filter`` is one of ``all`` | ``installed`` | ``not-installed``
     | ``selected``. ``installed``/``selected`` are sets of app IDs.
     """
+    query = (query or "")[:200]
     out = []
     for app in rows:
         if status_filter == "installed" and (
@@ -46,7 +57,11 @@ def filter_rows(rows: list, query: str, installed=None,
     return out
 
 
-def paginate(items: list, page: int, page_size: int):
+def paginate(
+    items: list,
+    page: int,
+    page_size: int,
+) -> tuple[list, int, int]:
     """Slice items into pages. Returns ``(page_items, total_pages, page)``.
 
     Out-of-range pages are clamped to the nearest valid page.
@@ -61,28 +76,45 @@ def paginate(items: list, page: int, page_size: int):
     return items[start:start + size], total_pages, clamped
 
 
-def save_selection(app_ids: list, path: str) -> None:
-    """Save app IDs to a plain-text file, one per line."""
+def save_selection(app_ids: list[str], path: str) -> None:
+    """Save app IDs to a plain-text file, one per line.
+
+    Blank/whitespace-only entries and duplicates are silently skipped.
+    Order of first occurrence is preserved.
+    """
+    seen: set[str] = set()
     with open(path, "w", encoding="utf-8") as fh:
         for app_id in app_ids:
-            if app_id.strip():
-                fh.write(app_id.strip() + "\n")
+            stripped = app_id.strip()
+            if stripped and stripped not in seen:
+                seen.add(stripped)
+                fh.write(stripped + "\n")
 
 
-def load_selection(path: str) -> list:
+def load_selection(path: str) -> tuple[list[str], int]:
     """Load app IDs from a file. Blank lines and ``#`` comments ignored.
 
-    Duplicates are removed, order is kept.
+    Duplicates are removed, order is kept.  Entries that do not look like
+    valid Flatpak app IDs are silently dropped (e.g. shell-injection
+    attempts such as ``--assumeyes`` or ``; rm -rf ~``).
+
+    Returns a ``(ids, skipped_count)`` tuple where ``skipped_count`` is
+    the number of lines that were dropped due to invalid app-ID format.
     """
     with open(path, "r", encoding="utf-8") as fh:
-        ids = [ln.strip() for ln in fh
+        raw = [ln.strip() for ln in fh
                if ln.strip() and not ln.startswith("#")]
-    seen, unique = set(), []
-    for app_id in ids:
+    seen: set[str] = set()
+    unique: list[str] = []
+    skipped = 0
+    for app_id in raw:
+        if not _APP_ID_RE.match(app_id):
+            skipped += 1
+            continue
         if app_id not in seen:
             seen.add(app_id)
             unique.append(app_id)
-    return unique
+    return unique, skipped
 
 
 __all__ = [

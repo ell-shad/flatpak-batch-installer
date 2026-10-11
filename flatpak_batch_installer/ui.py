@@ -70,11 +70,14 @@ class FlathubBrowser(tk.Tk):
         self._dialog_texts = {}
         self._shortcut_tree = None
         self._icon_refs = []
+        self._alive = True
+        self._filter_job = None
 
         self._build_widgets()
         self._init_theme()
         self._set_window_icon()
         self._build_shortcuts()
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.after(100, self.poll_log)
 
     # -- layout: single toolbar; selection status in the statusbar -----
@@ -199,6 +202,11 @@ class FlathubBrowser(tk.Tk):
         self.log = tk.Text(self, height=9, wrap="word", state="disabled")
         self.log.pack(fill="both", expand=False, padx=8, pady=(0, 8))
 
+    # -- window close ------------------------------------------------------
+    def _on_close(self):
+        self._alive = False
+        self.destroy()
+
     # -- logging / status ----------------------------------------------
     def append_log(self, text):
         self.log.configure(state="normal")
@@ -209,10 +217,14 @@ class FlathubBrowser(tk.Tk):
     def poll_log(self):
         try:
             while True:
-                self.append_log(self.log_queue.get_nowait())
+                try:
+                    self.append_log(self.log_queue.get_nowait())
+                except tk.TclError:
+                    return
         except queue.Empty:
             pass
-        self.after(100, self.poll_log)
+        if self._alive:
+            self.after(100, self.poll_log)
 
     def set_busy(self, busy):
         self.busy = busy
@@ -360,6 +372,8 @@ class FlathubBrowser(tk.Tk):
             rows, err = load_catalog(scope)
             if err:
                 self.log_queue.put("ERROR: " + err)
+                if not self._alive:
+                    return
                 self.after(0, lambda: [
                     self.set_busy(False),
                     self.status.set("Failed to load catalog. See log for details."),
@@ -387,6 +401,8 @@ class FlathubBrowser(tk.Tk):
                     f"Catalog loaded: {len(rows)} apps; "
                     f"{len(installed)} installed known.")
 
+            if not self._alive:
+                return
             self.after(0, finish)
 
         threading.Thread(target=worker, daemon=True).start()
@@ -396,31 +412,35 @@ class FlathubBrowser(tk.Tk):
             return
         scope = self.scope_var.get()
         self.set_busy(True)
-        cmd = ["flatpak", *scope_args(scope), "update", "--appstream", REMOTE]
+        update_args = [*scope_args(scope), "update", "--appstream", REMOTE]
         self.status.set("Updating AppStream metadata...")
-        self.log_queue.put("Running: " + " ".join(cmd))
+        self.log_queue.put("Running: flatpak " + " ".join(update_args))
 
         def worker():
-            result = run_flatpak(cmd[1:], timeout=300)
+            result = run_flatpak(update_args, timeout=300)
             if result.stdout.strip():
                 self.log_queue.put(result.stdout.strip())
             if result.returncode != 0:
                 self.log_queue.put(
                     "Metadata update failed: " +
                     (result.stderr.strip() or "unknown error"))
+                if not self._alive:
+                    return
                 self.after(0, lambda: [
                     self.set_busy(False),
                     self.status.set("Metadata update failed. See log."),
                 ])
                 return
             self.log_queue.put("Metadata update finished. Reloading catalog...")
+            if not self._alive:
+                return
             self.after(0, lambda: [self.set_busy(False), self.load_catalog()])
 
         threading.Thread(target=worker, daemon=True).start()
 
     # -- filtering / selection / pagination ------------------------------
     def schedule_filter(self):
-        if getattr(self, "_filter_job", None):
+        if self._filter_job:
             self.after_cancel(self._filter_job)
         self.page = 0
         self._filter_job = self.after(250, self.apply_filter)
@@ -603,7 +623,7 @@ class FlathubBrowser(tk.Tk):
         if not path:
             return
         try:
-            ids = load_selection(path)
+            ids, skipped = load_selection(path)
         except OSError as exc:
             messagebox.showerror("Load failed", str(exc))
             return
@@ -614,6 +634,8 @@ class FlathubBrowser(tk.Tk):
         self.page = 0
         self.apply_filter()
         msg = f"Loaded {len(ids)} app ID(s) from file."
+        if skipped > 0:
+            msg += f" {skipped} invalid ID(s) skipped."
         if unknown:
             msg += f" {len(unknown)} not in current catalog view."
             self.log_queue.put("Unknown IDs from file: " + ", ".join(unknown[:20]))
@@ -648,6 +670,8 @@ class FlathubBrowser(tk.Tk):
         dlg.geometry(geometry)
         dlg.transient(self)
         self._dialogs[key] = dlg
+        self._dialog_texts.pop(key, None)
+        dlg.bind("<Destroy>", lambda e: self._dialog_texts.pop(key, None))
         return dlg
 
     def _title_font(self, delta=6):
@@ -825,6 +849,8 @@ class FlathubBrowser(tk.Tk):
                     self.status.set(
                         "Install command failed. See log. "
                         "Hint: try scope 'User' if permission was denied.")
+            if not self._alive:
+                return
             self.after(0, finish)
 
         threading.Thread(target=worker, daemon=True).start()

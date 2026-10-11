@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Bug fixes, security hardening, and code quality: fix the WM_DELETE_WINDOW race condition, poll_log crash guard, save_selection deduplication bug, NameError in polish_active_theme light mode, update_metadata command construction, stream_command timeout, app-ID validation from loaded files, _filter_job initialization, stale _dialog_texts, query truncation, and add type hints. These are critical/high/medium bugs found in the audit of ui.py, catalog.py, installer.py, theme.py, and models.py.",
+  "status": "completed",
+  "steps": [
+    "1. flatpak_batch_installer/ui.py — add `self._alive = True` in FlathubBrowser.__init__ alongside existing instance attributes. Register `self.protocol('WM_DELETE_WINDOW', self._on_close)` at end of __init__. Add method `_on_close(self)` that sets `self._alive = False` then calls `self.destroy()`. In every background-thread lambda/closure that calls `self.after(0, …)`, guard with `if not self._alive: return` at the top of the closure.",
+    "2. flatpak_batch_installer/ui.py — in poll_log: wrap `self.append_log(...)` in `try/except tk.TclError: return`. Change the tail `self.after(100, self.poll_log)` to `if self._alive: self.after(100, self.poll_log)` so the recurring call stops cleanly after window close.",
+    "3. flatpak_batch_installer/catalog.py — in save_selection(), add deduplication using a seen-set before writing (same pattern as load_selection). tests/test_catalog.py — update test_round_trip_dedupes to assert the file contains 'b\\na\\n' (not 'b\\na\\na\\n') and that save+load is a proper round-trip.",
+    "4. flatpak_batch_installer/theme.py — in polish_active_theme(), assign `c = DARK_COLORS` unconditionally before the `if dark` block so both branches can reference `c` safely. This removes the latent NameError when dark=False.",
+    "5. flatpak_batch_installer/ui.py — in update_metadata(), replace the current `cmd = [\"flatpak\", *scope_args(scope), ...]` + `run_flatpak(cmd[1:], ...)` pattern with `update_args = [*scope_args(scope), \"update\", \"--appstream\", REMOTE]` and `run_flatpak(update_args, timeout=300)`. Log as `\"Running: flatpak \" + \" \".join(update_args)`.",
+    "6. flatpak_batch_installer/installer.py — add `timeout: int = 600` parameter to stream_command(). After Popen, read output in a loop using a thread or communicate. On TimeoutExpired: call proc.kill(), proc.wait(), call on_line(f'ERROR: command timed out after {timeout}s.'), return 124.",
+    "7. flatpak_batch_installer/catalog.py — in load_selection(), after stripping each line, validate with `re.match(r'^[A-Za-z0-9][A-Za-z0-9._-]*$', app_id)`. Drop IDs failing validation; accumulate count of skipped IDs and return it (extend return value to (list, skipped_count) OR raise a warning). flatpak_batch_installer/ui.py — load_selection_dialog surfaces the skipped count in the status bar if > 0. tests/test_catalog.py — add test with malformed IDs ('--assumeyes', '; rm -rf ~', '') and confirm they are dropped.",
+    "8. flatpak_batch_installer/ui.py — add `self._filter_job = None` in __init__ alongside other instance attributes (before _build_widgets call). Remove the getattr fallback in schedule_filter (replace with direct `if self._filter_job:`).",
+    "9. flatpak_batch_installer/ui.py — in _single_dialog(), after creating the new dlg Toplevel, pop self._dialog_texts.pop(key, None) to clear any stale text-widget reference. Bind `dlg.bind('<Destroy>', lambda e: self._dialog_texts.pop(key, None))` so future pops are automatic.",
+    "10. flatpak_batch_installer/catalog.py — in filter_rows(), truncate `query` to 200 chars: `query = (query or '')[:200]` before calling app.matches(). flatpak_batch_installer/models.py — in App.matches(), add `if len(q) > 200: q = q[:200]` as belt-and-suspenders after the strip.",
+    "11. flatpak_batch_installer/catalog.py — add full type annotations to all public functions: parse_remote_ls(output: str) -> list[App]; filter_rows(rows: list[App], query: str, installed: set[str] | None = None, status_filter: str = 'all', selected: set[str] | None = None) -> list[App]; paginate(items: list, page: int, page_size: int) -> tuple[list, int, int]; save_selection(app_ids: list[str], path: str) -> None; load_selection(path: str) -> list[str]."
+  ],
+  "acceptance_criteria": [
+    "Closing the window during a mock-busy state does not raise TclError in stderr.",
+    "poll_log reschedules only when self._alive is True.",
+    "save_selection(['b','a','a'], path) writes 'b\\na\\n' (no duplicates).",
+    "python3 -m unittest tests.test_catalog -v passes including updated test_round_trip_dedupes.",
+    "python3 -m unittest tests.test_ui -v passes including test_theme_toggle_round_trip and test_options_menu (both dark and light mode).",
+    "load_selection with a file containing '--assumeyes' drops that entry.",
+    "stream_command with a process that hangs returns 124 within timeout+1 seconds.",
+    "python3 -m compileall -q flatpak_batch_installer produces no errors."
+  ],
+  "verification": [
+    "python3 -m unittest discover -s tests -v",
+    "python3 -m compileall -q flatpak_batch_installer flatpak-gui.py tests"
+  ],
+  "blocked_reason": null,
+  "findings": "All 11 steps implemented and verified (44 tests pass, compileall clean). Key notes for FEAT-002+:\n\n1. load_selection() now returns (list[str], int) — a tuple of (ids, skipped_count). All callers in ui.py and tests/test_catalog.py have been updated.\n2. stream_command() signature: stream_command(cmd: list, on_line, timeout: int = 600) -> int. Returns 124 on timeout.\n3. _on_close() method added to FlathubBrowser: sets self._alive = False then destroys window. WM_DELETE_WINDOW is wired to it.\n4. self._alive (bool) and self._filter_job (None | after-id) are now proper __init__ attributes.\n5. save_selection() now deduplicates before writing (order-preserving, first-occurrence wins).\n6. load_selection() validates each app-ID against r'^[A-Za-z0-9][A-Za-z0-9._-]*$' and drops non-matching lines into skipped_count.\n7. update_metadata() uses update_args = [*scope_args(scope), 'update', '--appstream', REMOTE] and calls run_flatpak(update_args, timeout=300) — no more cmd[1:] slicing.\n8. _single_dialog() now pops self._dialog_texts[key] on creation and binds <Destroy> to auto-pop.\n9. theme.py polish_active_theme(): c = DARK_COLORS assigned unconditionally before the if dark block.\n10. catalog.py and models.py both truncate query to 200 chars.\n11. catalog.py public functions have full PEP 604 type annotations (Python 3.10+ syntax)."
+}

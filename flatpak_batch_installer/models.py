@@ -18,6 +18,8 @@ class App:
     def matches(self, query: str) -> bool:
         """Case-insensitive match against app ID, name and summary."""
         q = (query or "").strip().lower()
+        if len(q) > 200:
+            q = q[:200]
         if not q:
             return True
         return q in f"{self.app_id} {self.name} {self.summary}".lower()
