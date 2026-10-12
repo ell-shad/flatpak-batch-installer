@@ -10,11 +10,7 @@ Flatpak operation. GUI first, CLI capable. Python + Tkinter with one
 lightweight pure-Python theme library (ttkbootstrap — declared dependency,
 graceful built-in fallback when absent).
 
-## Screenshots
-
-| Browse catalog | Dark mode |
-|---|---|
-| ![Browse catalog — fetched app list](assets/screenshots/list-of-apps.png) | 
+ ![Browse catalog — fetched app list](assets/screenshots/list-of-apps.png) 
 
 ## Install
 
