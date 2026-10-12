@@ -14,11 +14,7 @@ graceful built-in fallback when absent).
 
 | Browse catalog | Dark mode |
 |---|---|
-| ![Browse catalog — fetched app list](assets/screenshots/list-of-apps.png) | ![Dark mode](assets/screenshots/dark-mode.png) |
-
-| Installed Apps tab |
-|---|
-| ![Installed Apps tab](assets/screenshots/installed-apps.png) |
+| ![Browse catalog — fetched app list](assets/screenshots/list-of-apps.png) | 
 
 ## Install
 
